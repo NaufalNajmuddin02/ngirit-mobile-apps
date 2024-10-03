@@ -1,0 +1,39 @@
+name: ngirit
+version: 1.0.0+1
+publish_to: none
+description: A new Flutter project.
+environment: 
+  sdk: '>=3.4.1 <4.0.0'
+
+dependencies: 
+  cupertino_icons: ^1.0.6
+  get: 4.6.6
+  firebase_core: ^2.13.0
+  firebase_auth: ^4.6.0
+  cloud_firestore: ^4.5.0
+  firebase_storage: ^11.6.9
+  flutter: 
+    sdk: flutter
+  intl: ^0.19.0
+  font_awesome_flutter: ^10.7.0
+  fl_chart: ^0.69.0
+
+dev_dependencies: 
+  flutter_lints: ^3.0.0
+  flutter_test: 
+    sdk: flutter
+
+flutter: 
+  uses-material-design: true
+  assets:
+    - assets/images/splash_logo.png
+    - assets/images/onboarding_image.png
+    - assets/images/onboarding_image1.png
+    - assets/images/onboarding_image2.png
+    - assets/images/login.png
+    - assets/images/logo.png
+    - assets/images/ngirit.png
+  fonts:
+    - family: Lilita One
+      fonts:
+        - asset: assets/fonts/LilitaOne-Regular.ttf
