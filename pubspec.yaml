@@ -33,6 +33,15 @@ flutter:
     - assets/images/login.png
     - assets/images/logo.png
     - assets/images/ngirit.png
+    - assets/icons/bca.webp
+    - assets/icons/bni.jpg
+    - assets/icons/bri.png
+    - assets/icons/mandiri.svg
+    - assets/icons/paypal.webp
+    - assets/icons/car.png
+    - assets/icons/cinema.png
+    - assets/icons/shop.png
+    - assets/icons/food.png    
   fonts:
     - family: Lilita One
       fonts:

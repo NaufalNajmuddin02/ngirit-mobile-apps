@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../controllers/batas_pengeluaran_controller.dart';
 
 class BatasPengeluaranView extends StatelessWidget {
   final BatasPengeluaranController controller =
       Get.put(BatasPengeluaranController());
+
+  final Map<String, IconData> categoryIcons = {
+    'Belanja': Icons.shopping_cart,
+    'Alat Mandi': Icons.bathtub,
+    'Makan': Icons.fastfood,
+    'Liburan': Icons.beach_access,
+    'Transportasi': Icons.directions_car,
+    'Kesehatan': Icons.local_hospital,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +26,14 @@ class BatasPengeluaranView extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.blue.shade900, // Light blue
-                  Colors.white, // Dark blue
+                  Colors.blue.shade900,
+                  Colors.white,
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
           ),
-          // Upper curve design
           Container(
             height: 90,
             decoration: BoxDecoration(
@@ -35,7 +43,6 @@ class BatasPengeluaranView extends StatelessWidget {
               ),
             ),
           ),
-          // Positioned Arus Kas text or search field
           Positioned(
             top: 40,
             left: 0,
@@ -51,20 +58,18 @@ class BatasPengeluaranView extends StatelessWidget {
               ),
             ),
           ),
-// Plus button (overflow menu) positioned at the top-right corner
           Positioned(
             top: 30,
             right: 12,
             child: IconButton(
-              icon: Icon(Icons.add, color: Colors.white), // Change to plus icon
+              icon: Icon(Icons.add, color: Colors.white),
               onPressed: () {
-                // Show the bottom sheet menu for category selection
                 showModalBottomSheet(
                   context: context,
-                  backgroundColor: Colors.white, // Set the background color
+                  backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20), // Rounded corners
+                      top: Radius.circular(20),
                     ),
                   ),
                   builder: (BuildContext context) {
@@ -72,38 +77,16 @@ class BatasPengeluaranView extends StatelessWidget {
                       padding: EdgeInsets.all(16),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: Icon(Icons
-                                .shopping_cart), // Shopping icon for Belanja
-                            title: Text('Belanja'),
+                        children: categoryIcons.keys.map((kategori) {
+                          return ListTile(
+                            leading: Icon(categoryIcons[kategori]),
+                            title: Text(kategori),
                             onTap: () {
-                              Navigator.pop(
-                                  context); // Close the category selection sheet
-                              _showValueLimitModal(context, 'Belanja');
+                              Navigator.pop(context);
+                              _showInputModal(context, kategori);
                             },
-                          ),
-                          ListTile(
-                            leading: Icon(
-                                Icons.bathtub), // Bathtub icon for Alat Mandi
-                            title: Text('Alat Mandi'),
-                            onTap: () {
-                              Navigator.pop(
-                                  context); // Close the category selection sheet
-                              _showValueLimitModal(context, 'Alat Mandi');
-                            },
-                          ),
-                          ListTile(
-                            leading: Icon(
-                                Icons.fastfood), // Fast food icon for Makan
-                            title: Text('Makan'),
-                            onTap: () {
-                              Navigator.pop(
-                                  context); // Close the category selection sheet
-                              _showValueLimitModal(context, 'Makan');
-                            },
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
                     );
                   },
@@ -111,104 +94,126 @@ class BatasPengeluaranView extends StatelessWidget {
               },
             ),
           ),
-
           // Main content with padding to move it down
           Padding(
-            padding: const EdgeInsets.only(top: 100.0), // Adjusted top padding
-            child: Column(
-              children: [
-                SizedBox(height: 30), // Space before month section
-                // Month section
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0), // Padding lebih besar
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Previous Month Button
-                      IconButton(
-                        icon: Icon(Icons.arrow_left),
-                        color: Colors.white,
-                        iconSize: 40,
-                        onPressed: () {
-                          controller.changeMonth(-1);
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                      ),
-                      // Previous Month Container
-                      Expanded(
-                        child: Obx(() =>
-                            buildMonthContainer(controller.previousMonth)),
-                      ),
-                      SizedBox(width: 3),
-                      // Selected Month Container
-                      Expanded(
-                        child: Obx(() => buildMonthContainer(
-                            controller.selectedMonth, true)),
-                      ),
-                      SizedBox(width: 3),
-                      // Next Month Container
-                      Expanded(
-                        child: Obx(
-                            () => buildMonthContainer(controller.nextMonth)),
-                      ),
-                      // Next Month Button
-                      IconButton(
-                        icon: Icon(Icons.arrow_right),
-                        color: Colors.white,
-                        iconSize: 40,
-                        onPressed: () {
-                          controller.changeMonth(1);
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20),
-                // Expanded list for cash flow content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // Grouped transactions
-                          Obx(() {
-                            final groupedTransactions =
-                                controller.getGroupedTransactions();
-                            return ListView.builder(
-                              physics:
-                                  NeverScrollableScrollPhysics(), // Prevent scrolling of inner list
-                              shrinkWrap: true,
-                              itemCount: groupedTransactions.keys.length,
-                              itemBuilder: (context, index) {
-                                String date =
-                                    groupedTransactions.keys.elementAt(index);
-                                List<Map<String, String>> transactions =
-                                    groupedTransactions[date]!;
+            padding: const EdgeInsets.only(top: 100.0),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: controller
+                  .getBatasPengeluaranStream(), // Gunakan fungsi query dengan user_id
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  // Jika data sedang di-load, tampilkan loading spinner
+                  return Center(child: CircularProgressIndicator());
+                }
 
-                                return buildTransactionGroup(
-                                    date, transactions);
-                              },
-                            );
-                          }),
-                        ],
+                if (snapshot.hasError) {
+                  // Tampilkan error jika ada masalah dengan data
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  // Jika tidak ada data pengeluaran
+                  return Center(child: Text('Tidak ada data pengeluaran.'));
+                }
+
+                final batasPengeluaranList = snapshot.data!.docs;
+
+                return ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: batasPengeluaranList.length,
+                  itemBuilder: (context, index) {
+                    var batasPengeluaran = batasPengeluaranList[index];
+                    var kategori =
+                        batasPengeluaran['kategori'] ?? 'Tidak diketahui';
+                    var jumlah = batasPengeluaran['jumlah'] ?? 0;
+                    var documentId = batasPengeluaran.id;
+                    var tanggal =
+                        (batasPengeluaran['tanggal'] as Timestamp).toDate();
+
+                    IconData? icon = categoryIcons[kategori] ?? Icons.help;
+
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                    height:
-                        10), // Spacer between transactions and financial summary
-              ],
+                      elevation: 4,
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(16),
+                        leading: Icon(icon, color: Colors.blue, size: 30),
+                        title: Text(
+                          kategori,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tanggal: ${tanggal.toLocal().toString().split(' ')[0]}',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Jumlah: Rp $jumlah',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Batas: Rp ${controller.spendingLimitsByCategory[kategori] ?? 0.0}',
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.grey),
+                            ),
+                            SizedBox(height: 8),
+                            Obx(() {
+                              double progress = jumlah /
+                                  (controller
+                                          .spendingLimitsByCategory[kategori] ??
+                                      1.0);
+                              Color progressColor = progress >= 1
+                                  ? Colors.red
+                                  : progress >= 0.75
+                                      ? Colors.orange
+                                      : Colors.blue;
+
+                              return LinearProgressIndicator(
+                                value: progress.clamp(0.0, 1.0),
+                                backgroundColor: Colors.grey[300],
+                                color: progressColor,
+                              );
+                            }),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () {
+                                _showEditModal(
+                                    context, kategori, jumlah, documentId);
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                _confirmDelete(context, documentId);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
-      // Floating Action Button
+// Floating Action Button
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
         backgroundColor: Colors.black,
@@ -249,7 +254,7 @@ class BatasPengeluaranView extends StatelessWidget {
               IconButton(
                 icon: Icon(FontAwesomeIcons.bullseye, size: 30),
                 onPressed: () {
-                  
+                  Get.toNamed('/batas');
                 },
               ),
             ],
@@ -258,248 +263,258 @@ class BatasPengeluaranView extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Month Container with Month on top and Year below
-  Widget buildMonthContainer(String monthYear, [bool isCurrent = false]) {
-    final parts = monthYear.split(" ");
-    final month = parts[0]; // Month name
-    final year = parts[1]; // Year
+void _showInputModal(BuildContext context, String kategori) {
+  final controller = Get.find<BatasPengeluaranController>();
+  double valueJumlah = 0.0;
+  double valueLimit = 0.0;
 
-    return Container(
-      width: 90, // Reduced fixed width to prevent overflow
-      padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-      decoration: BoxDecoration(
-        color: isCurrent ? Color(0xFF1E2147) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: isCurrent
-            ? [
-                BoxShadow(
-                  color: Color.fromARGB(255, 189, 189, 189).withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            month,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Center(
+          child: Text(
+            'Tambah Pengeluaran - $kategori',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 2), // Space between month and year
-          Text(
-            year,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Transaction Group by Date
-  Widget buildTransactionGroup(
-      String date, List<Map<String, String>> transactions) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            DateFormat('MMMM d, yyyy').format(DateTime.parse(date)),
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          SizedBox(height: 8),
-          Column(
-            children: transactions.map((transaction) {
-              // Gunakan nilai default untuk target dan progress
-              String target = "900000"; // Misal target default adalah 50000
-              double progress = double.parse(transaction["amount"]!) /
-                  double.parse(
-                      target); // Progress dihitung dari amount / target
-
-              return buildTransactionItem(
-                transaction["date"]!,
-                transaction["description"]!,
-                transaction["amount"]!,
-                target,
-                progress.clamp(0.0, 1.0), // Clamp progress antara 0 hingga 1
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Transaction Card Item
-  Widget buildTransactionItem(String date, String description, String amount,
-      String target, double progress) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.blue,
-                radius: 24,
-                child: Icon(Icons.shopping_cart, color: Colors.white),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      description,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    SizedBox(height: 4),
-                    Text(date, style: TextStyle(color: Colors.grey)),
-                  ],
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Jumlah Pengeluaran',
+                  hintText: 'Masukkan jumlah pengeluaran',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: Icon(Icons.money),
                 ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  valueJumlah = double.tryParse(value) ?? 0.0;
+                },
+              ),
+              SizedBox(height: 16),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Batas Pengeluaran',
+                  hintText: 'Masukkan batas pengeluaran',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: Icon(Icons.warning),
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  valueLimit = double.tryParse(value) ?? 0.0;
+                },
               ),
             ],
           ),
-          SizedBox(height: 12), // Spacing between the row and the divider
-          Divider(thickness: 1, color: Colors.grey.withOpacity(0.5)),
-          SizedBox(height: 12), // Spacing between the divider and the amount
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Batal'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+              textStyle: TextStyle(fontSize: 16),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (valueJumlah > 0 && valueLimit > 0) {
+                controller.setSpendingLimit(valueLimit, kategori);
+                controller.addBatasPengeluaran(kategori, valueJumlah);
+                Navigator.of(context).pop();
+              } else {
+                Get.snackbar(
+                    'Kesalahan', 'Jumlah dan batas harus lebih besar dari 0');
+              }
+            },
+            child: Text('Simpan'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Color.fromARGB(255, 255, 255, 255),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _showEditModal(BuildContext context, String kategori, double currentAmount,
+    String documentId) {
+  final controller = Get.find<BatasPengeluaranController>();
+  double newAmount = currentAmount;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Center(
+          child: Text(
+            'Edit Pengeluaran - $kategori',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Tersedia",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Jumlah Pengeluaran',
+                  hintText: 'Masukkan jumlah pengeluaran',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        "Rp ",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        amount,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Target",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    target,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
-              ),
-              Container(
-                height: 80, // Adjust height as needed
-                width: 20, // Adjust width as needed
-                child: RotatedBox(
-                  quarterTurns: -1, // Rotate to make it vertical
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey.withOpacity(0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      progress >= 1.0
-                          ? Colors.green
-                          : Colors.blue, // Change color when full
-                    ),
-                  ),
+                  prefixIcon: Icon(Icons.money),
                 ),
+                keyboardType: TextInputType.number,
+                controller:
+                    TextEditingController(text: currentAmount.toString()),
+                onChanged: (value) {
+                  newAmount = double.tryParse(value) ?? currentAmount;
+                },
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // Function to show the value limit modal with input field
-  void _showValueLimitModal(BuildContext context, String kategori) {
-    TextEditingController jumlahController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Masukkan Batas Pengeluaran untuk $kategori'),
-          content: TextField(
-            controller: jumlahController,
-            decoration: InputDecoration(labelText: 'Jumlah'),
-            keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Batal'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+              textStyle: TextStyle(fontSize: 16),
+            ),
           ),
-          actions: [
-            TextButton(
-              child: Text('Simpan'),
-              onPressed: () {
-                double jumlah = double.tryParse(jumlahController.text) ?? 0.0;
-                controller.addBatasPengeluaran(kategori, jumlah);
+          ElevatedButton(
+            onPressed: () {
+              if (newAmount > 0) {
+                // Update the spending amount in Firestore
+                controller.firestore
+                    .collection('batas_pengeluaran')
+                    .doc(documentId)
+                    .update({'jumlah': newAmount});
                 Navigator.of(context).pop();
-              },
+              } else {
+                Get.snackbar('Kesalahan', 'Jumlah harus lebih besar dari 0');
+              }
+            },
+            child: Text('Simpan'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Color.fromARGB(255, 255, 255, 255),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            TextButton(
-              child: Text('Batal'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _confirmDelete(BuildContext context, String documentId) {
+  final controller = Get.find<BatasPengeluaranController>();
+
+  // Fetch the document to get the category before deletion
+  controller.firestore
+      .collection('batas_pengeluaran')
+      .doc(documentId)
+      .get()
+      .then((doc) {
+    if (doc.exists) {
+      String category = doc['kategori']; // Get the category from the document
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
-        );
-      },
-    );
-  }
+            title: Center(
+              child: Text(
+                'Konfirmasi Hapus',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            content: Text('Apakah Anda yakin ingin menghapus pengeluaran ini?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Batal'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  textStyle: TextStyle(fontSize: 16),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  // Delete the batas_pengeluaran document
+                  await controller.firestore
+                      .collection('batas_pengeluaran')
+                      .doc(documentId)
+                      .delete();
+
+                  // Delete the corresponding spending limit document
+                  String spendingLimitDocId = '${controller.userId}_$category';
+                  await controller.firestore
+                      .collection('spending_limits')
+                      .doc(spendingLimitDocId)
+                      .delete();
+
+                  Navigator.of(context).pop();
+                  Get.snackbar('Sukses',
+                      'Pengeluaran dan batas pengeluaran berhasil dihapus');
+                },
+                child: Text('Hapus'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      Get.snackbar('Gagal', 'Pengeluaran tidak ditemukan.');
+    }
+  }).catchError((error) {
+    Get.snackbar('Gagal', 'Terjadi kesalahan: $error');
+  });
 }
