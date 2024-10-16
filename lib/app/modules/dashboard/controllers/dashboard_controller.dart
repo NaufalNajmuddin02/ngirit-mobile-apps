@@ -16,9 +16,16 @@ class DashboardController extends GetxController {
   var selectedAkun = ''.obs;
   var selectedKategori = ''.obs;
   var selectedDate = ''.obs;
-  TextEditingController nominalController = TextEditingController();
-
+  var deskripsi = ''.obs; // Variabel untuk menyimpan deskripsi
   TextEditingController deskripsiController = TextEditingController();
+  TextEditingController nominalController = TextEditingController();
+  @override
+
+  void onClose() {
+    deskripsiController.dispose();
+    nominalController.dispose(); // Dispose nominalController juga
+    super.onClose();
+  }
 
   @override
   void onInit() {
@@ -147,6 +154,20 @@ class DashboardController extends GetxController {
   // Function to save form data to Firestore
   Future<void> saveFormData(String nominal) async {
     final controller = Get.find<DashboardController>();
+    String collection;
+    switch (controller.selectedTab.value) {
+      case 0:
+        collection = 'pengeluaran';
+        break;
+      case 1:
+        collection = 'pendapatan';
+        break;
+      case 2:
+        collection = 'transfer';
+        break;
+      default:
+        collection = 'pengeluaran';
+    }
 
     if (controller.selectedKategori.isNotEmpty &&
         controller.selectedAkun.isNotEmpty &&
@@ -155,19 +176,19 @@ class DashboardController extends GetxController {
         User? user = FirebaseAuth.instance.currentUser;
 
         if (user != null) {
-          await FirebaseFirestore.instance.collection('pengeluaran').add({
+          await FirebaseFirestore.instance.collection(collection).add({
             'user_id': user.uid,
             'nominal': nominal,
-            'deskripsi': deskripsiController.text,
+            'deskripsi': controller.deskripsi.value,
             'kategori': controller.selectedKategori.value,
             'akun': controller.selectedAkun.value,
             'tanggal': controller.selectedDate.value,
             'createdAt': FieldValue.serverTimestamp(),
           });
-          Get.snackbar('Success', 'Data pengeluaran berhasil disimpan');
+          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
         }
       } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data pengeluaran');
+        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
       }
     } else {
       Get.snackbar('Error', 'Pastikan semua field diisi');
@@ -175,13 +196,6 @@ class DashboardController extends GetxController {
   }
 
   // Function to reset the form fields
-  void resetForm() {
-    nominalController.clear();
-    deskripsiController.clear();
-    selectedAkun.value = '';
-    selectedKategori.value = '';
-    selectedDate.value = '';
-  }
 
   void toggleSaldoVisibility() {
     isSaldoVisible.value = !isSaldoVisible.value;
@@ -211,6 +225,16 @@ class DashboardController extends GetxController {
       case 2:
         Get.offAll(() => ProfileView());
         break;
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Get.offAllNamed('/login'); // Redirect to login page after logout
+      print("User logged out");
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to log out');
     }
   }
 }

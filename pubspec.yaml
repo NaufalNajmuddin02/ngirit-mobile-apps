@@ -42,7 +42,13 @@ flutter:
     - assets/icons/car.png
     - assets/icons/cinema.png
     - assets/icons/shop.png
-    - assets/icons/food.png    
+    - assets/icons/food.png   
+    - assets/icons/icons8-add-shopping-cart-96.png
+    - assets/icons/icons8-cars-96.png
+    - assets/icons/icons8-eat-96.png
+    - assets/icons/icons8-entertainment-96.png
+    - assets/icons/icons8-no-96.png
+
   fonts:
     - family: Lilita One
       fonts:
