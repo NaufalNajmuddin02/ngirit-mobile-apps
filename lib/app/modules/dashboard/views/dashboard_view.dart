@@ -57,8 +57,8 @@ class DashboardView extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.logout, color: Colors.white),
                         onPressed: () {
-                          controller
-                              .logout(); // Panggil fungsi logout dari controller
+                          Get.offAllNamed(
+                              '/login'); // Redirect to login page after logout
                         },
                       ),
                     ],

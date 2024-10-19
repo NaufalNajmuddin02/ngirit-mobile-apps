@@ -9,6 +9,8 @@ import 'package:ngirit/app/modules/dashboard/bindings/dashboard_binding.dart';
 import 'package:ngirit/app/modules/dashboard/views/dashboard_view.dart';
 import 'package:ngirit/app/modules/editsaldo/bindings/editsaldo_binding.dart';
 import 'package:ngirit/app/modules/editsaldo/views/editsaldo_view.dart';
+import 'package:ngirit/app/modules/profile/bindings/profile_binding.dart';
+import 'package:ngirit/app/modules/profile/views/profile_view.dart';
 import 'package:ngirit/app/modules/saldo/views/saldo_view.dart';
 import 'package:ngirit/app/modules/statistic/bindings/statistic_binding.dart';
 import 'package:ngirit/app/modules/statistic/views/statistic_view.dart';
@@ -103,6 +105,11 @@ class AppPages {
       name: _Paths.CREDITCARD,
       page: () => const CreditcardView(),
       binding: CreditcardBinding(),
+    ),
+        GetPage(
+      name: _Paths.PROFILE,
+      page: () => ProfileView(),
+      binding: ProfileBinding(),
     ),
   ];
 }

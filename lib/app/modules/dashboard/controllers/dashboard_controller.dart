@@ -20,7 +20,6 @@ class DashboardController extends GetxController {
   TextEditingController deskripsiController = TextEditingController();
   TextEditingController nominalController = TextEditingController();
   @override
-
   void onClose() {
     deskripsiController.dispose();
     nominalController.dispose(); // Dispose nominalController juga
