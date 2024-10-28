@@ -30,7 +30,7 @@ class LoginView extends StatelessWidget {
             children: [
               Center(
                 child: Image.asset(
-                  'assets/images/login.png', // Ganti dengan path gambar Anda
+                  'assets/images/Group.png', // Ganti dengan path gambar Anda
                   fit: BoxFit.cover, // Atur ukuran gambar
                 ),
               ),
@@ -44,7 +44,7 @@ class LoginView extends StatelessWidget {
                 ),
               ),
               Text(
-                'Login to continue using the app',
+                'manage money easier',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -55,7 +55,7 @@ class LoginView extends StatelessWidget {
                 'Email',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
@@ -88,7 +88,7 @@ class LoginView extends StatelessWidget {
                 'Password',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),

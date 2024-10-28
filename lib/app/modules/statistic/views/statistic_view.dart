@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-
+import 'package:intl/intl.dart';
 import '../controllers/statistic_controller.dart';
 
 class StatisticView extends GetView<StatisticController> {
@@ -213,13 +213,15 @@ class StatisticView extends GetView<StatisticController> {
 
                         SizedBox(height: 10),
                         // Add labels and values below the bar chart
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Column(
                               children: [
                                 Obx(() => Text(
-                                      'Rp. ${controller.totalIncome.value}',
+                                      // Format nilai totalIncome dengan format rupiah
+                                      '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.totalIncome.value)}',
                                       style: TextStyle(
                                         color: Colors.green,
                                         fontWeight: FontWeight.bold,
@@ -231,7 +233,8 @@ class StatisticView extends GetView<StatisticController> {
                             Column(
                               children: [
                                 Obx(() => Text(
-                                      'Rp. ${controller.totalExpense.value}',
+                                      // Format nilai totalExpense dengan format rupiah
+                                      '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.totalExpense.value)}',
                                       style: TextStyle(
                                         color: Colors.red,
                                         fontWeight: FontWeight.bold,
@@ -243,7 +246,8 @@ class StatisticView extends GetView<StatisticController> {
                             Column(
                               children: [
                                 Obx(() => Text(
-                                      'Rp. ${controller.totalBalance.value}',
+                                      // Format nilai totalBalance dengan format rupiah
+                                      '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.totalBalance.value)}',
                                       style: TextStyle(
                                         color: Colors.blue,
                                         fontWeight: FontWeight.bold,
@@ -262,9 +266,9 @@ class StatisticView extends GetView<StatisticController> {
                     'Pengeluaran Berdasarkan Kategori',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  // 'Pengeluaran Berdasarkan Kategori' pie chart
+// 'Pengeluaran Berdasarkan Kategori' pie chart
                   Container(
-                    height: 200,
+                    height: 300, // Tinggi total untuk kontainer
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -281,18 +285,71 @@ class StatisticView extends GetView<StatisticController> {
                     ),
                     child: Obx(() {
                       if (controller.pieChartData.isEmpty) {
-                        return Text('Tidak ada data');
+                        return Center(child: Text('Tidak ada data'));
                       } else {
-                        return PieChart(
-                          PieChartData(
-                            sections: controller.pieChartData,
-                            centerSpaceRadius: 40,
-                            sectionsSpace: 2,
-                          ),
+                        // Menghitung total pengeluaran
+                        double totalAmount =
+                            controller.pieChartData.fold(0.0, (sum, section) {
+                          return sum + section.value;
+                        });
+
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: PieChart(
+                                PieChartData(
+                                  sections: controller.pieChartData,
+                                  centerSpaceRadius: 40,
+                                  sectionsSpace: 2,
+                                ),
+                              ),
+                            ),
+                            // Jarak antara pie chart dan keterangan
+                            Container(
+                              height: 80, // Batasi tinggi untuk keterangan
+                              child: ListView(
+                                children:
+                                    controller.pieChartData.map((section) {
+                                  String category =
+                                      section.title; // Mengambil nama kategori
+                                  double value = section.value;
+                                  double percentage = (totalAmount > 0)
+                                      ? (value / totalAmount) * 100
+                                      : 0;
+
+                                  // Format nilai nominal dengan format rupiah (Rp 1.000.000)
+                                  final formattedValue = NumberFormat.currency(
+                                    locale: 'id', // Locale Indonesia
+                                    symbol: 'Rp', // Simbol Rupiah
+                                    decimalDigits: 0, // Tidak ada desimal
+                                  ).format(value);
+
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4.0),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 16,
+                                          height: 16,
+                                          color: section.color,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          '$category: $formattedValue (${percentage.toStringAsFixed(1)}%)',
+                                          style: TextStyle(fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         );
                       }
                     }),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -327,7 +384,9 @@ class StatisticView extends GetView<StatisticController> {
               ),
               IconButton(
                 icon: Icon(Icons.swap_horiz, size: 30),
-                onPressed: () {},
+                onPressed: () {
+                  Get.toNamed('/cashflow');
+                },
               ),
               SizedBox(width: 48), // Space for FloatingActionButton
               IconButton(
@@ -339,7 +398,7 @@ class StatisticView extends GetView<StatisticController> {
               IconButton(
                 icon: Icon(FontAwesomeIcons.bullseye, size: 30),
                 onPressed: () {
-                  Get.toNamed('/batas');
+                  Get.toNamed('/bataspengeluaran');
                 },
               ),
             ],
@@ -379,10 +438,10 @@ class StatisticView extends GetView<StatisticController> {
                       backgroundColor =
                           Colors.green; // Warna hijau untuk Pendapatan
                       break;
-                    case 2:
-                      backgroundColor =
-                          Colors.blue; // Warna biru untuk Transfer
-                      break;
+                    // case 2:
+                    //   backgroundColor =
+                    //       Colors.blue; // Warna biru untuk Transfer
+                    //   break;
                     default:
                       backgroundColor = Colors.red;
                   }
@@ -399,7 +458,7 @@ class StatisticView extends GetView<StatisticController> {
                           children: [
                             _buildTabItem('Pengeluaran', Colors.red, 0),
                             _buildTabItem('Pendapatan', Colors.green, 1),
-                            _buildTabItem('Transfer', Colors.blue, 2),
+                            // _buildTabItem('Transfer', Colors.blue, 2),
                           ],
                         ),
                         // Input angka "0,00" di dalam background color
@@ -462,8 +521,8 @@ class StatisticView extends GetView<StatisticController> {
                               return _buildPengeluaranForm(context);
                             case 1:
                               return _buildPendapatanForm(context);
-                            case 2:
-                              return _buildTransferForm();
+                            // case 2:
+                            //   return _buildTransferForm();
                             default:
                               return _buildPengeluaranForm(context);
                           }
@@ -510,6 +569,7 @@ class StatisticView extends GetView<StatisticController> {
   }
 
 // Fungsi untuk membuat text field di dalam bottom sheet
+// Fungsi untuk membuat TabItem di dalam bottom sheet
   Widget _buildTabItem(String title, Color color, int index) {
     return Expanded(
       child: Obx(() {
@@ -648,10 +708,6 @@ class StatisticView extends GetView<StatisticController> {
                             : 'Pilih Akun', // Placeholder
                       ),
                     ),
-                    Divider(
-                      thickness: 1, // Tebal garis bawah
-                      color: Colors.grey, // Warna garis bawah
-                    ),
                   ],
                 ),
               );
@@ -667,7 +723,7 @@ class StatisticView extends GetView<StatisticController> {
         GestureDetector(
           onTap: () async {
             // Tampilkan DatePicker saat pengguna mengetuk field tanggal
-            DateTime? selectedDate = await showDatePicker(
+            DateTime? selectedDates = await showDatePicker(
               context: context, // Gunakan context di sini
               initialDate: DateTime.now(),
               firstDate: DateTime(2000),
@@ -675,9 +731,9 @@ class StatisticView extends GetView<StatisticController> {
             );
 
             // Jika pengguna memilih tanggal, simpan ke controller
-            if (selectedDate != null) {
-              controller.selectedDate.value =
-                  "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}";
+            if (selectedDates != null) {
+              controller.selectedDates.value =
+                  "${selectedDates.day}-${selectedDates.month}-${selectedDates.year}";
             }
           },
           child: AbsorbPointer(
@@ -688,8 +744,8 @@ class StatisticView extends GetView<StatisticController> {
                   children: [
                     TextField(
                       decoration: InputDecoration(
-                        hintText: controller.selectedDate.value.isNotEmpty
-                            ? controller.selectedDate.value
+                        hintText: controller.selectedDates.value.isNotEmpty
+                            ? controller.selectedDates.value
                             : 'Pilih Tanggal', // Placeholder
                         prefixIcon:
                             Icon(Icons.calendar_today), // Ikon di dalam field
@@ -821,15 +877,15 @@ class StatisticView extends GetView<StatisticController> {
         ),
         GestureDetector(
           onTap: () async {
-            DateTime? selectedDate = await showDatePicker(
+            DateTime? selectedDates = await showDatePicker(
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime(2000),
               lastDate: DateTime(2101),
             );
-            if (selectedDate != null) {
-              controller.selectedDate.value =
-                  "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}";
+            if (selectedDates != null) {
+              controller.selectedDates.value =
+                  "${selectedDates.day}-${selectedDates.month}-${selectedDates.year}";
             }
           },
           child: AbsorbPointer(
@@ -840,11 +896,11 @@ class StatisticView extends GetView<StatisticController> {
                   children: [
                     TextField(
                       controller: TextEditingController(
-                        text: controller.selectedDate.value,
+                        text: controller.selectedDates.value,
                       ),
                       decoration: InputDecoration(
-                        hintText: controller.selectedDate.value.isNotEmpty
-                            ? controller.selectedDate.value
+                        hintText: controller.selectedDates.value.isNotEmpty
+                            ? controller.selectedDates.value
                             : 'Pilih Tanggal',
                         prefixIcon: Icon(Icons.calendar_today),
                         border: InputBorder.none,
@@ -864,19 +920,6 @@ class StatisticView extends GetView<StatisticController> {
       ],
     );
   }
-
-  Widget _buildTransferForm() {
-    return Column(
-      children: [
-        _buildTextField('Deskripsi', Icons.edit),
-        _buildTextField('Kategori', Icons.list),
-        _buildTextField('Dibayar dengan', Icons.wallet_giftcard),
-        _buildTextField('Tanggal', Icons.calendar_today),
-      ],
-    );
-  }
-
-// Fungsi untuk membuat text field di dalam bottom sheet
 
   Widget _buildTextField(String label, IconData icon) {
     return Padding(
@@ -945,7 +988,6 @@ class StatisticView extends GetView<StatisticController> {
   void _showAkunBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> akunList = [
       {'nama_akun': 'BNI', 'icon': 'assets/icons/bni.jpg'},
-
       // Akun lainnya...
     ];
 
@@ -959,32 +1001,41 @@ class StatisticView extends GetView<StatisticController> {
           padding: EdgeInsets.all(16.0),
           height: 300,
           child: Obx(() {
-            if (controller.accounts.isEmpty) {
+            if (controller.accounts.isEmpty && controller.creditCards.isEmpty) {
               return Center(
-                child: Text('Tidak ada akun tersedia'),
+                child: Text('Tidak ada akun atau kartu tersedia'),
               );
             } else {
               return ListView.builder(
-                itemCount: controller.accounts.length,
+                itemCount:
+                    controller.accounts.length + controller.creditCards.length,
                 itemBuilder: (context, index) {
-                  var akun = controller.accounts[index];
-
-                  return ListTile(
-                    leading: Icon(
-                        Icons.account_balance_wallet), // Ikon bisa disesuaikan
-
-                    title: Text(akun['nama_akun']),
-
-                    subtitle: Text('Saldo: ${akun['saldo_awal']}'),
-
-                    onTap: () {
-                      // Update selected akun
-
-                      controller.selectedAkun.value = akun['nama_akun'];
-
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                  );
+                  Map<String, dynamic> item;
+                  if (index < controller.accounts.length) {
+                    item = controller.accounts[index];
+                    return ListTile(
+                      leading: Icon(Icons.account_balance_wallet),
+                      title: Text(item['nama_akun']),
+                      subtitle: Text('Saldo: ${item['saldo_awal']}'),
+                      onTap: () {
+                        controller.selectedAkun.value = item['nama_akun'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  } else {
+                    // Menampilkan data kartu kredit
+                    item = controller
+                        .creditCards[index - controller.accounts.length];
+                    return ListTile(
+                      leading: Icon(Icons.credit_card),
+                      title: Text(item['namaKartu']),
+                      subtitle: Text('Limit: ${item['limitKredit']}'),
+                      onTap: () {
+                        controller.selectedAkun.value = item['namaKartu'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  }
                 },
               );
             }
@@ -994,17 +1045,24 @@ class StatisticView extends GetView<StatisticController> {
     );
   }
 
-  // Fungsi buttomsheet kategori pengeluaran
+// Fungsi buttomsheet kategori pengeluaran
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makanan', 'icon': 'assets/icons/icons8-eat-96.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/icons8-cars-96.png'},
-      {
-        'labels': 'Belanja',
-        'icon': 'assets/icons/icons8-add-shopping-cart-96.png'
-      },
-      {'labels': 'Hiburan', 'icon': 'assets/icons/icons8-entertainment-96.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
+      {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
+      {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},
+      {'labels': 'Kesehatan', 'icon': 'assets/icons/kesehatan.png'},
+      {'labels': 'Liburan', 'icon': 'assets/icons/liburan.png'},
+      {'labels': 'Perbaikan Rumah', 'icon': 'assets/icons/rumah.png'},
+      {'labels': 'Pakaian', 'icon': 'assets/icons/outfit.png'},
+      {'labels': 'Internet', 'icon': 'assets/icons/internet.png'},
+      {'labels': 'Olahraga & Gym', 'icon': 'assets/icons/gym.png'},
+      {'labels': 'Lainnya', 'icon': 'assets/icons/lainnya.png'},
     ];
 
     showModalBottomSheet(
@@ -1015,7 +1073,8 @@ class StatisticView extends GetView<StatisticController> {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 250,
+          height:
+              MediaQuery.of(context).size.height * 0.6, // 60% of screen height
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1024,36 +1083,62 @@ class StatisticView extends GetView<StatisticController> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: kategoriList.map((kategori) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Simpan kategori yang dipilih di controller
-                      controller.selectedKategori.value = kategori['labels'];
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 30, // Ukuran icon
-                          backgroundColor: Colors.grey[200],
-                          child: Image.asset(
-                            kategori['icon'], // Menampilkan gambar dari assets
-                            width: 28, // Ukuran gambar
-                            height: 28,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          kategori['labels'], // Menggunakan 'labels' yang benar
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
+              Expanded(
+                child: SingleChildScrollView(
+                  child: GridView.builder(
+                    shrinkWrap:
+                        true, // Prevents GridView from expanding infinitely
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disable GridView scrolling
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, // Number of columns in grid
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio:
+                          0.7, // Adjusted for better space for text
                     ),
-                  );
-                }).toList(),
+                    itemCount: kategoriList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final kategori = kategoriList[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Simpan kategori yang dipilih di controller
+                          controller.selectedKategori.value =
+                              kategori['labels'];
+                          Navigator.pop(context); // Tutup bottom sheet
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 30, // Ukuran icon
+                              backgroundColor: Colors.grey[200],
+                              child: Image.asset(
+                                kategori[
+                                    'icon'], // Menampilkan gambar dari assets
+                                width: 28, // Ukuran gambar
+                                height: 28,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: 70, // Batasan lebar teks
+                              child: Text(
+                                kategori[
+                                    'labels'], // Menggunakan 'labels' yang benar
+                                style: TextStyle(fontSize: 12),
+                                textAlign: TextAlign.center, // Rata tengah
+                                softWrap: true, // Mengizinkan pembungkusan teks
+                                overflow:
+                                    TextOverflow.visible, // Tidak overflow
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -1062,16 +1147,14 @@ class StatisticView extends GetView<StatisticController> {
     );
   }
 
-  // Fungsi buttomsheet kategori penghasilan
+// Fungsi buttomsheet kategori penghasilan
   void _showKategoriPendapatanBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriPendapatanList = [
-      {'labels': 'Makanan', 'icon': 'assets/icons/icons8-eat-96.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/icons8-cars-96.png'},
-      {
-        'labels': 'Belanja',
-        'icon': 'assets/icons/icons8-add-shopping-cart-96.png'
-      },
-      {'labels': 'Hiburan', 'icon': 'assets/icons/icons8-entertainment-96.png'},
+      {'label': 'Gaji', 'icon': 'assets/icons/gaji.png'},
+      {'label': 'Investasi', 'icon': 'assets/icons/investasi.png'},
+      {'label': 'Bonus', 'icon': 'assets/icons/hadiah.png'},
+      {'label': 'Uang Saku', 'icon': 'assets/icons/uangsaku.png'},
+      {'label': 'Lainnya', 'icon': 'assets/icons/lainnya.png'},
     ];
 
     showModalBottomSheet(
@@ -1082,45 +1165,71 @@ class StatisticView extends GetView<StatisticController> {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 250,
+          height:
+              MediaQuery.of(context).size.height * 0.6, // 60% of screen height
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pilih Kategori Pendapatan',
+                'Pilih Kategori',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: kategoriPendapatanList.map((kategori) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Simpan kategori yang dipilih di controller
-                      controller.selectedKategori.value = kategori['label'];
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 30, // Ukuran icon
-                          backgroundColor: Colors.grey[200],
-                          child: Image.asset(
-                            kategori['icon'], // Menampilkan gambar dari assets
-                            width: 28, // Ukuran gambar
-                            height: 28,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          kategori['labels'], // Menggunakan 'labels' yang benar
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
+              Expanded(
+                child: SingleChildScrollView(
+                  child: GridView.builder(
+                    shrinkWrap:
+                        true, // Prevents GridView from expanding infinitely
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disable GridView scrolling
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, // Number of columns in grid
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio:
+                          0.7, // Adjusted for better space for text
                     ),
-                  );
-                }).toList(),
+                    itemCount: kategoriPendapatanList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final kategori = kategoriPendapatanList[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Simpan kategori yang dipilih di controller
+                          controller.selectedKategori.value = kategori['label'];
+                          Navigator.pop(context); // Tutup bottom sheet
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 30, // Ukuran icon
+                              backgroundColor: Colors.grey[200],
+                              child: Image.asset(
+                                kategori[
+                                    'icon'], // Menampilkan gambar dari assets
+                                width: 28, // Ukuran gambar
+                                height: 28,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: 70, // Batasan lebar teks
+                              child: Text(
+                                kategori[
+                                    'label'], // Menggunakan 'labels' yang benar
+                                style: TextStyle(fontSize: 12),
+                                textAlign: TextAlign.center, // Rata tengah
+                                softWrap: true, // Mengizinkan pembungkusan teks
+                                overflow:
+                                    TextOverflow.visible, // Tidak overflow
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -1128,55 +1237,55 @@ class StatisticView extends GetView<StatisticController> {
       },
     );
   }
-}
 
 // Month Container with Month on top and Year below
-Widget buildMonthContainer(String monthYear, [bool isCurrent = false]) {
-  final parts = monthYear.split(" ");
-  final month = parts[0]; // Month name
-  final year = parts[1]; // Year
+  Widget buildMonthContainer(String monthYear, [bool isCurrent = false]) {
+    final parts = monthYear.split(" ");
+    final month = parts[0]; // Month name
+    final year = parts[1]; // Year
 
-  return Container(
-    width: 90, // Reduced fixed width to prevent overflow
-    padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-    decoration: BoxDecoration(
-      color: isCurrent ? Color(0xFF1E2147) : Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
-      boxShadow: isCurrent
-          ? [
-              BoxShadow(
-                color: Color.fromARGB(255, 189, 189, 189).withOpacity(0.5),
-                spreadRadius: 2,
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ]
-          : [],
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          month,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return Container(
+      width: 90, // Reduced fixed width to prevent overflow
+      padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      decoration: BoxDecoration(
+        color: isCurrent ? Color(0xFF1E2147) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: Color.fromARGB(255, 189, 189, 189).withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : [],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            month,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-        ),
-        SizedBox(height: 2), // Space between month and year
-        Text(
-          year,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.normal,
-            color: Colors.white,
+          SizedBox(height: 2), // Space between month and year
+          Text(
+            year,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.normal,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

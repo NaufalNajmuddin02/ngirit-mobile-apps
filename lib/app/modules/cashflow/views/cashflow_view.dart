@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/cash_flow_controller.dart';
+import 'package:intl/intl.dart';
+import '../controllers/cashflow_controller.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class CashFlowView extends StatelessWidget {
-  final CashFlowController controller = Get.put(CashFlowController());
+class CashflowView extends StatelessWidget {
+  final CashflowController controller = Get.put(CashflowController());
   // State variable to manage search field visibility
   final RxBool isSearchVisible = false.obs;
   final TextEditingController nominalController = TextEditingController();
@@ -127,19 +128,38 @@ class CashFlowView extends StatelessWidget {
                         builder: (BuildContext context) {
                           // Example list of categories and accounts
                           List<String> allCategories = [
-                            'Makanan',
+                            'Makan',
                             'Minuman',
                             'Transportasi',
                             'Belanja',
                             'Hiburan',
                             'Gaji',
+                            'Bonus',
+                            'Uang Saku',
+                            'Lainnya',
+                            'Pendidikan',
+                            'Kesehatan',
+                            'Liburan',
+                            'Perbaikan Rumah',
+                            'Pakaian',
+                            'Internet',
+                            'Olahraga & Gym',
+                            'Kesehatan',
                           ];
                           List<String> allAccounts = [
                             'BRI',
                             'BCA',
                             'Mandiri',
                             'BNI',
-                            'Cash',
+                            'CIMB',
+                            'Danamon',
+                            'Permata',
+                            'BTN',
+                            'Maybank',
+                            'OCBC NISP',
+                            'Panin',
+                            'Bukopin',
+                            'Muamalat',
                           ]; // Example accounts list
 
                           return Container(
@@ -169,93 +189,97 @@ class CashFlowView extends StatelessWidget {
                                         ),
                                       ),
                                       builder: (BuildContext context) {
-                                        return Container(
-                                          padding: EdgeInsets.all(16),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                'Pilih Kategori',
-                                                style: TextStyle(
+                                        return SingleChildScrollView(
+                                          child: Container(
+                                            padding: EdgeInsets.all(16),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Pilih Kategori',
+                                                  style: TextStyle(
                                                     fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(height: 10),
-                                              Obx(() => Wrap(
-                                                    spacing: 8.0,
-                                                    children: allCategories
-                                                        .map((category) {
-                                                      bool isSelected =
-                                                          controller
-                                                              .selectedCategories
-                                                              .contains(
-                                                                  category);
-                                                      return FilterChip(
-                                                        label: Text(category),
-                                                        selected: isSelected,
-                                                        onSelected:
-                                                            (bool selected) {
-                                                          if (selected) {
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 10),
+                                                Obx(() => Wrap(
+                                                      spacing: 8.0,
+                                                      children: allCategories
+                                                          .map((category) {
+                                                        bool isSelected =
                                                             controller
                                                                 .selectedCategories
-                                                                .add(category);
-                                                          } else {
-                                                            controller
-                                                                .selectedCategories
-                                                                .remove(
+                                                                .contains(
                                                                     category);
-                                                          }
-                                                        },
-                                                      );
-                                                    }).toList(),
-                                                  )),
-                                              SizedBox(height: 20),
-                                              Text(
-                                                'Pilih Akun',
-                                                style: TextStyle(
+                                                        return FilterChip(
+                                                          label: Text(category),
+                                                          selected: isSelected,
+                                                          onSelected:
+                                                              (bool selected) {
+                                                            if (selected) {
+                                                              controller
+                                                                  .selectedCategories
+                                                                  .add(
+                                                                      category);
+                                                            } else {
+                                                              controller
+                                                                  .selectedCategories
+                                                                  .remove(
+                                                                      category);
+                                                            }
+                                                          },
+                                                        );
+                                                      }).toList(),
+                                                    )),
+                                                SizedBox(height: 20),
+                                                Text(
+                                                  'Pilih Akun',
+                                                  style: TextStyle(
                                                     fontSize: 16,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              SizedBox(height: 10),
-                                              Obx(() => Wrap(
-                                                    spacing: 8.0,
-                                                    children: allAccounts
-                                                        .map((account) {
-                                                      bool isSelected =
-                                                          controller
-                                                              .selectedAccounts
-                                                              .contains(
-                                                                  account);
-                                                      return FilterChip(
-                                                        label: Text(account),
-                                                        selected: isSelected,
-                                                        onSelected:
-                                                            (bool selected) {
-                                                          if (selected) {
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 10),
+                                                Obx(() => Wrap(
+                                                      spacing: 8.0,
+                                                      children: allAccounts
+                                                          .map((account) {
+                                                        bool isSelected =
                                                             controller
                                                                 .selectedAccounts
-                                                                .add(account);
-                                                          } else {
-                                                            controller
-                                                                .selectedAccounts
-                                                                .remove(
+                                                                .contains(
                                                                     account);
-                                                          }
-                                                        },
-                                                      );
-                                                    }).toList(),
-                                                  )),
-                                              SizedBox(height: 10),
-                                              ElevatedButton(
-                                                child: Text('Terapkan Filter'),
-                                                onPressed: () {
-                                                  Get.back(); // Close bottom sheet
-                                                  // The filtered data will update automatically via controller
-                                                },
-                                              ),
-                                            ],
+                                                        return FilterChip(
+                                                          label: Text(account),
+                                                          selected: isSelected,
+                                                          onSelected:
+                                                              (bool selected) {
+                                                            if (selected) {
+                                                              controller
+                                                                  .selectedAccounts
+                                                                  .add(account);
+                                                            } else {
+                                                              controller
+                                                                  .selectedAccounts
+                                                                  .remove(
+                                                                      account);
+                                                            }
+                                                          },
+                                                        );
+                                                      }).toList(),
+                                                    )),
+                                                SizedBox(height: 10),
+                                                ElevatedButton(
+                                                  child:
+                                                      Text('Terapkan Filter'),
+                                                  onPressed: () {
+                                                    Get.back(); // Close bottom sheet
+                                                    // The filtered data will update automatically via controller
+                                                  },
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         );
                                       },
@@ -274,104 +298,57 @@ class CashFlowView extends StatelessWidget {
 
           // Month Navigation with enhanced styling and adjacent months
           Positioned(
-            top: 100,
-            left: 16,
-            right: 16,
-            child: Obx(() => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              top: 90,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Previous month button
                     IconButton(
-                      icon:
-                          Icon(Icons.arrow_left, size: 40, color: Colors.white),
-                      onPressed: controller.previousMonth,
-                    ),
-                    // Display the previous month
-                    Column(
-                      children: [
-                        Text(
-                          '${controller.getMonthName(controller.getPreviousMonth())}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${controller.getPreviousMonthYear()}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Current month display
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF1E2147),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color.fromARGB(255, 189, 189, 189)
-                                .withOpacity(0.5),
-                            spreadRadius: 2,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '${controller.getMonthName(controller.selectedMonth.value)}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            '${controller.selectedYear.value}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
+                      icon: Icon(Icons.arrow_left),
+                      color: Colors.white,
+                      iconSize: 40,
+                      onPressed: () {
+                        controller.changeMonth(-1);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(
+                        minWidth: 40, // Mengatur ukuran minimal tombol
                       ),
                     ),
-                    // Display the next month
-                    Column(
-                      children: [
-                        Text(
-                          '${controller.getMonthName(controller.getNextMonth())}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${controller.getNextMonthYear()}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      child: Obx(
+                          () => buildMonthContainer(controller.previousMonth)),
                     ),
-                    // Next month button
+                    SizedBox(width: 3),
+                    Expanded(
+                      child: Obx(() =>
+                          buildMonthContainer(controller.selectedMonth, true)),
+                    ),
+                    SizedBox(width: 3),
+                    Expanded(
+                      child:
+                          Obx(() => buildMonthContainer(controller.nextMonth)),
+                    ),
                     IconButton(
-                      icon: Icon(Icons.arrow_right,
-                          size: 40, color: Colors.white),
-                      onPressed: controller.nextMonth,
+                      icon: Icon(Icons.arrow_right),
+                      color: Colors.white,
+                      iconSize: 40,
+                      onPressed: () {
+                        controller.changeMonth(1);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(
+                        minWidth: 40, // Mengatur ukuran minimal tombol
+                      ),
                     ),
                   ],
-                )),
-          ),
+                ),
+              )),
 
-          // Main content with Padding
+// Main content with Padding
           Padding(
             padding: const EdgeInsets.only(top: 160.0), // Adjusted top padding
             child: Column(
@@ -393,32 +370,55 @@ class CashFlowView extends StatelessWidget {
                                 shrinkWrap: true,
                                 itemCount: controller.filteredExpenses.length,
                                 itemBuilder: (context, index) {
-                                  final expense =
-                                      controller.filteredExpenses[index];
+                                  final expense = controller.filteredExpenses
+                                      .reversed // Mengurutkan data terbaru di atas
+                                      .toList()[index];
 
                                   // Menentukan ikon berdasarkan kategori
                                   String assetPath;
 
                                   switch (expense['kategori']) {
-                                    case 'Makanan':
-                                      assetPath =
-                                          'assets/icons/icons8-eat-96.png';
+                                    case 'Makan':
+                                      assetPath = 'assets/icons/makanan.png';
                                       break;
                                     case 'Transportasi':
-                                      assetPath =
-                                          'assets/icons/icons8-cars-96.png';
+                                      assetPath = 'assets/icons/cars.png';
                                       break;
                                     case 'Hiburan':
-                                      assetPath =
-                                          'assets/icons/icons8-entertainment-96.png';
+                                      assetPath = 'assets/icons/hiburan.png';
                                       break;
                                     case 'Belanja':
-                                      assetPath =
-                                          'assets/icons/icons8-add-shopping-cart-96.png';
+                                      assetPath = 'assets/icons/belanja.png';
+                                      break;
+                                    case 'Pendidikan':
+                                      assetPath = 'assets/icons/pendidikan.png';
+                                      break;
+                                    case 'Kesehatan':
+                                      assetPath = 'assets/icons/kesehatan.png';
+                                      break;
+                                    case 'Liburan':
+                                      assetPath = 'assets/icons/liburan.png';
+                                      break;
+                                    case 'Perbaikan Rumah':
+                                      assetPath = 'assets/icons/rumah.png';
+                                      break;
+                                    case 'Pakaian':
+                                      assetPath = 'assets/icons/outfit.png';
+                                      break;
+                                    case 'Internet':
+                                      assetPath = 'assets/icons/internet.png';
+                                      break;
+                                    case 'Olahraga & Gym':
+                                      assetPath = 'assets/icons/gym.png';
+                                    case 'Asuransi':
+                                      assetPath = 'assets/icons/kesehatan.png';
+                                      break;
+                                    case 'Lainnya':
+                                      assetPath = 'assets/icons/lainnya.png';
                                       break;
                                     default:
                                       assetPath =
-                                          'assets/icons/icons8-no-96.png'; // Ikon default jika kategori tidak cocok
+                                          'assets/icons/icons8-no-96.png';
                                   }
 
                                   return Card(
@@ -433,12 +433,15 @@ class CashFlowView extends StatelessWidget {
                                         backgroundColor: Colors.transparent,
                                         child: Image.asset(
                                           assetPath,
-                                          fit: BoxFit
-                                              .cover, // Menyesuaikan gambar dalam CircleAvatar
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
                                       title: Text(
-                                        'Rp ${expense['nominal'].toString()}',
+                                        NumberFormat.currency(
+                                          locale: 'id',
+                                          symbol: 'Rp ',
+                                          decimalDigits: 0,
+                                        ).format(expense['nominal'] ?? 0),
                                         style: TextStyle(
                                           color: Colors.red,
                                           fontWeight: FontWeight.bold,
@@ -462,44 +465,38 @@ class CashFlowView extends StatelessWidget {
                                 },
                               ),
                         controller.filteredIncome.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Belum ada data di bulan ini',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              )
+                            ? Padding(padding: const EdgeInsets.all(16.0))
                             : ListView.builder(
                                 physics: NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
                                 itemCount: controller.filteredIncome.length,
                                 itemBuilder: (context, index) {
-                                  final income =
-                                      controller.filteredIncome[index];
+                                  final income = controller.filteredIncome
+                                      .reversed // Mengurutkan data terbaru di atas
+                                      .toList()[index];
 
                                   // Menentukan ikon berdasarkan kategori
                                   String assetPath;
 
                                   switch (income['kategori']) {
-                                    case 'Makanan':
-                                      assetPath =
-                                          'assets/icons/icons8-eat-96.png';
+                                    case 'Gaji':
+                                      assetPath = 'assets/icons/gaji.png';
                                       break;
-                                    case 'Transportasi':
-                                      assetPath =
-                                          'assets/icons/icons8-cars-96.png';
+                                    case 'Investasi':
+                                      assetPath = 'assets/icons/investasi.png';
                                       break;
-                                    case 'Hiburan':
-                                      assetPath =
-                                          'assets/icons/icons8-entertainment-96.png';
+                                    case 'Bonus':
+                                      assetPath = 'assets/icons/bonus.png';
                                       break;
-                                    case 'Belanja':
-                                      assetPath =
-                                          'assets/icons/icons8-add-shopping-cart-96.png';
+                                    case 'Uang Saku':
+                                      assetPath = 'assets/icons/uangsaku.png';
+                                      break;
+                                    case 'Lainnya':
+                                      assetPath = 'assets/icons/lainnya.png';
                                       break;
                                     default:
                                       assetPath =
-                                          'assets/icons/icons8-no-96.png'; // Ikon default jika kategori tidak cocok
+                                          'assets/icons/icons8-no-96.png';
                                   }
 
                                   return Card(
@@ -514,12 +511,15 @@ class CashFlowView extends StatelessWidget {
                                         backgroundColor: Colors.transparent,
                                         child: Image.asset(
                                           assetPath,
-                                          fit: BoxFit
-                                              .cover, // Menyesuaikan gambar dalam CircleAvatar
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
                                       title: Text(
-                                        'Rp ${income['nominal'].toString()}',
+                                        NumberFormat.currency(
+                                          locale: 'id',
+                                          symbol: 'Rp ',
+                                          decimalDigits: 0,
+                                        ).format(income['nominal'] ?? 0),
                                         style: TextStyle(
                                           color: Colors.green,
                                           fontWeight: FontWeight.bold,
@@ -569,10 +569,14 @@ class CashFlowView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'Rp ${controller.totalExpenses.toStringAsFixed(0)}',
+                                NumberFormat.currency(
+                                  locale: 'id', // Menggunakan locale Indonesia
+                                  symbol: 'Rp ', // Simbol mata uang
+                                  decimalDigits: 0, // Tidak ada digit desimal
+                                ).format(controller.totalExpense
+                                    .value), // Format total pengeluaran
                                 style: TextStyle(
-                                    fontSize:
-                                        15, // Ukuran font lebih besar untuk angka
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.red),
                               ),
@@ -585,15 +589,19 @@ class CashFlowView extends StatelessWidget {
                                           const Color.fromARGB(255, 0, 0, 0))),
                             ],
                           ),
-                          // Kolom untuk Total Pemasukan
+// Kolom untuk Total Pemasukan
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'Rp ${controller.totalIncome.toStringAsFixed(0)}',
+                                NumberFormat.currency(
+                                  locale: 'id', // Menggunakan locale Indonesia
+                                  symbol: 'Rp ', // Simbol mata uang
+                                  decimalDigits: 0, // Tidak ada digit desimal
+                                ).format(controller.totalIncome
+                                    .value), // Format total pemasukan
                                 style: TextStyle(
-                                    fontSize:
-                                        15, // Ukuran font lebih besar untuk angka
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.green),
                               ),
@@ -606,15 +614,19 @@ class CashFlowView extends StatelessWidget {
                                           255, 37, 37, 37))),
                             ],
                           ),
-                          // Kolom untuk Saldo
+// Kolom untuk Saldo
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'Rp ${controller.totalBalanceValue.toStringAsFixed(0)}',
+                                NumberFormat.currency(
+                                  locale: 'id', // Menggunakan locale Indonesia
+                                  symbol: 'Rp ', // Simbol mata uang
+                                  decimalDigits: 0, // Tidak ada digit desimal
+                                ).format(controller
+                                    .totalBalance.value), // Format saldo
                                 style: TextStyle(
-                                    fontSize:
-                                        15, // Ukuran font lebih besar untuk angka
+                                    fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.blue),
                               ),
@@ -637,7 +649,7 @@ class CashFlowView extends StatelessWidget {
         ],
       ),
 
-     // Floating Action Button
+      // Floating Action Button
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
         backgroundColor: Colors.black,
@@ -677,7 +689,7 @@ class CashFlowView extends StatelessWidget {
               IconButton(
                 icon: Icon(FontAwesomeIcons.bullseye, size: 30),
                 onPressed: () {
-                  Get.toNamed('/batas');
+                  Get.toNamed('/bataspengeluaran');
                 },
               ),
             ],
@@ -686,6 +698,57 @@ class CashFlowView extends StatelessWidget {
       ),
     );
   }
+
+  Widget buildMonthContainer(String monthYear, [bool isCurrent = false]) {
+    final parts = monthYear.split(" ");
+    final month = parts[0]; // Month name
+    final year = parts[1]; // Year
+
+    return Container(
+      width: 90, // Reduced fixed width to prevent overflow
+      padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      decoration: BoxDecoration(
+        color: isCurrent ? Color(0xFF1E2147) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: isCurrent
+            ? [
+                BoxShadow(
+                  color: Color.fromARGB(255, 189, 189, 189).withOpacity(0.5),
+                  spreadRadius: 2,
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : [],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            month,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2), // Space between month and year
+          Text(
+            year,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.normal,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showModalBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -716,10 +779,10 @@ class CashFlowView extends StatelessWidget {
                       backgroundColor =
                           Colors.green; // Warna hijau untuk Pendapatan
                       break;
-                    case 2:
-                      backgroundColor =
-                          Colors.blue; // Warna biru untuk Transfer
-                      break;
+                    // case 2:
+                    //   backgroundColor =
+                    //       Colors.blue; // Warna biru untuk Transfer
+                    //   break;
                     default:
                       backgroundColor = Colors.red;
                   }
@@ -736,7 +799,7 @@ class CashFlowView extends StatelessWidget {
                           children: [
                             _buildTabItem('Pengeluaran', Colors.red, 0),
                             _buildTabItem('Pendapatan', Colors.green, 1),
-                            _buildTabItem('Transfer', Colors.blue, 2),
+                            // _buildTabItem('Transfer', Colors.blue, 2),
                           ],
                         ),
                         // Input angka "0,00" di dalam background color
@@ -799,8 +862,8 @@ class CashFlowView extends StatelessWidget {
                               return _buildPengeluaranForm(context);
                             case 1:
                               return _buildPendapatanForm(context);
-                            case 2:
-                              return _buildTransferForm();
+                            // case 2:
+                            //   return _buildTransferForm();
                             default:
                               return _buildPengeluaranForm(context);
                           }
@@ -847,6 +910,7 @@ class CashFlowView extends StatelessWidget {
   }
 
 // Fungsi untuk membuat text field di dalam bottom sheet
+  // Fungsi untuk membuat TabItem di dalam bottom sheet
   Widget _buildTabItem(String title, Color color, int index) {
     return Expanded(
       child: Obx(() {
@@ -985,10 +1049,6 @@ class CashFlowView extends StatelessWidget {
                             : 'Pilih Akun', // Placeholder
                       ),
                     ),
-                    Divider(
-                      thickness: 1, // Tebal garis bawah
-                      color: Colors.grey, // Warna garis bawah
-                    ),
                   ],
                 ),
               );
@@ -1004,7 +1064,7 @@ class CashFlowView extends StatelessWidget {
         GestureDetector(
           onTap: () async {
             // Tampilkan DatePicker saat pengguna mengetuk field tanggal
-            DateTime? selectedDate = await showDatePicker(
+            DateTime? selectedDates = await showDatePicker(
               context: context, // Gunakan context di sini
               initialDate: DateTime.now(),
               firstDate: DateTime(2000),
@@ -1012,9 +1072,9 @@ class CashFlowView extends StatelessWidget {
             );
 
             // Jika pengguna memilih tanggal, simpan ke controller
-            if (selectedDate != null) {
-              controller.selectedDate.value =
-                  "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}";
+            if (selectedDates != null) {
+              controller.selectedDates.value =
+                  "${selectedDates.day}-${selectedDates.month}-${selectedDates.year}";
             }
           },
           child: AbsorbPointer(
@@ -1025,8 +1085,8 @@ class CashFlowView extends StatelessWidget {
                   children: [
                     TextField(
                       decoration: InputDecoration(
-                        hintText: controller.selectedDate.value.isNotEmpty
-                            ? controller.selectedDate.value
+                        hintText: controller.selectedDates.value.isNotEmpty
+                            ? controller.selectedDates.value
                             : 'Pilih Tanggal', // Placeholder
                         prefixIcon:
                             Icon(Icons.calendar_today), // Ikon di dalam field
@@ -1158,15 +1218,15 @@ class CashFlowView extends StatelessWidget {
         ),
         GestureDetector(
           onTap: () async {
-            DateTime? selectedDate = await showDatePicker(
+            DateTime? selectedDates = await showDatePicker(
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime(2000),
               lastDate: DateTime(2101),
             );
-            if (selectedDate != null) {
-              controller.selectedDate.value =
-                  "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}";
+            if (selectedDates != null) {
+              controller.selectedDates.value =
+                  "${selectedDates.day}-${selectedDates.month}-${selectedDates.year}";
             }
           },
           child: AbsorbPointer(
@@ -1177,11 +1237,11 @@ class CashFlowView extends StatelessWidget {
                   children: [
                     TextField(
                       controller: TextEditingController(
-                        text: controller.selectedDate.value,
+                        text: controller.selectedDates.value,
                       ),
                       decoration: InputDecoration(
-                        hintText: controller.selectedDate.value.isNotEmpty
-                            ? controller.selectedDate.value
+                        hintText: controller.selectedDates.value.isNotEmpty
+                            ? controller.selectedDates.value
                             : 'Pilih Tanggal',
                         prefixIcon: Icon(Icons.calendar_today),
                         border: InputBorder.none,
@@ -1201,19 +1261,6 @@ class CashFlowView extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildTransferForm() {
-    return Column(
-      children: [
-        _buildTextField('Deskripsi', Icons.edit),
-        _buildTextField('Kategori', Icons.list),
-        _buildTextField('Dibayar dengan', Icons.wallet_giftcard),
-        _buildTextField('Tanggal', Icons.calendar_today),
-      ],
-    );
-  }
-
-// Fungsi untuk membuat text field di dalam bottom sheet
 
   Widget _buildTextField(String label, IconData icon) {
     return Padding(
@@ -1282,7 +1329,6 @@ class CashFlowView extends StatelessWidget {
   void _showAkunBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> akunList = [
       {'nama_akun': 'BNI', 'icon': 'assets/icons/bni.jpg'},
-
       // Akun lainnya...
     ];
 
@@ -1296,32 +1342,41 @@ class CashFlowView extends StatelessWidget {
           padding: EdgeInsets.all(16.0),
           height: 300,
           child: Obx(() {
-            if (controller.accounts.isEmpty) {
+            if (controller.accounts.isEmpty && controller.creditCards.isEmpty) {
               return Center(
-                child: Text('Tidak ada akun tersedia'),
+                child: Text('Tidak ada akun atau kartu tersedia'),
               );
             } else {
               return ListView.builder(
-                itemCount: controller.accounts.length,
+                itemCount:
+                    controller.accounts.length + controller.creditCards.length,
                 itemBuilder: (context, index) {
-                  var akun = controller.accounts[index];
-
-                  return ListTile(
-                    leading: Icon(
-                        Icons.account_balance_wallet), // Ikon bisa disesuaikan
-
-                    title: Text(akun['nama_akun']),
-
-                    subtitle: Text('Saldo: ${akun['saldo_awal']}'),
-
-                    onTap: () {
-                      // Update selected akun
-
-                      controller.selectedAkun.value = akun['nama_akun'];
-
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                  );
+                  Map<String, dynamic> item;
+                  if (index < controller.accounts.length) {
+                    item = controller.accounts[index];
+                    return ListTile(
+                      leading: Icon(Icons.account_balance_wallet),
+                      title: Text(item['nama_akun']),
+                      subtitle: Text('Saldo: ${item['saldo_awal']}'),
+                      onTap: () {
+                        controller.selectedAkun.value = item['nama_akun'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  } else {
+                    // Menampilkan data kartu kredit
+                    item = controller
+                        .creditCards[index - controller.accounts.length];
+                    return ListTile(
+                      leading: Icon(Icons.credit_card),
+                      title: Text(item['namaKartu']),
+                      subtitle: Text('Limit: ${item['limitKredit']}'),
+                      onTap: () {
+                        controller.selectedAkun.value = item['namaKartu'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  }
                 },
               );
             }
@@ -1335,13 +1390,20 @@ class CashFlowView extends StatelessWidget {
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makanan', 'icon': 'assets/icons/icons8-eat-96.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/icons8-cars-96.png'},
-      {
-        'labels': 'Belanja',
-        'icon': 'assets/icons/icons8-add-shopping-cart-96.png'
-      },
-      {'labels': 'Hiburan', 'icon': 'assets/icons/icons8-entertainment-96.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
+      {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
+      {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},
+      {'labels': 'Kesehatan', 'icon': 'assets/icons/kesehatan.png'},
+      {'labels': 'Liburan', 'icon': 'assets/icons/liburan.png'},
+      {'labels': 'Perbaikan Rumah', 'icon': 'assets/icons/rumah.png'},
+      {'labels': 'Pakaian', 'icon': 'assets/icons/outfit.png'},
+      {'labels': 'Internet', 'icon': 'assets/icons/internet.png'},
+      {'labels': 'Olahraga & Gym', 'icon': 'assets/icons/gym.png'},
+      {'labels': 'Lainnya', 'icon': 'assets/icons/lainnya.png'},
     ];
 
     showModalBottomSheet(
@@ -1352,7 +1414,8 @@ class CashFlowView extends StatelessWidget {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 250,
+          height:
+              MediaQuery.of(context).size.height * 0.6, // 60% of screen height
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1361,36 +1424,62 @@ class CashFlowView extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: kategoriList.map((kategori) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Simpan kategori yang dipilih di controller
-                      controller.selectedKategori.value = kategori['labels'];
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 30, // Ukuran icon
-                          backgroundColor: Colors.grey[200],
-                          child: Image.asset(
-                            kategori['icon'], // Menampilkan gambar dari assets
-                            width: 28, // Ukuran gambar
-                            height: 28,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          kategori['labels'], // Menggunakan 'labels' yang benar
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
+              Expanded(
+                child: SingleChildScrollView(
+                  child: GridView.builder(
+                    shrinkWrap:
+                        true, // Prevents GridView from expanding infinitely
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disable GridView scrolling
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, // Number of columns in grid
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio:
+                          0.7, // Adjusted for better space for text
                     ),
-                  );
-                }).toList(),
+                    itemCount: kategoriList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final kategori = kategoriList[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Simpan kategori yang dipilih di controller
+                          controller.selectedKategori.value =
+                              kategori['labels'];
+                          Navigator.pop(context); // Tutup bottom sheet
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 30, // Ukuran icon
+                              backgroundColor: Colors.grey[200],
+                              child: Image.asset(
+                                kategori[
+                                    'icon'], // Menampilkan gambar dari assets
+                                width: 28, // Ukuran gambar
+                                height: 28,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: 70, // Batasan lebar teks
+                              child: Text(
+                                kategori[
+                                    'labels'], // Menggunakan 'labels' yang benar
+                                style: TextStyle(fontSize: 12),
+                                textAlign: TextAlign.center, // Rata tengah
+                                softWrap: true, // Mengizinkan pembungkusan teks
+                                overflow:
+                                    TextOverflow.visible, // Tidak overflow
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -1402,13 +1491,11 @@ class CashFlowView extends StatelessWidget {
   // Fungsi buttomsheet kategori penghasilan
   void _showKategoriPendapatanBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriPendapatanList = [
-      {'labels': 'Makanan', 'icon': 'assets/icons/icons8-eat-96.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/icons8-cars-96.png'},
-      {
-        'labels': 'Belanja',
-        'icon': 'assets/icons/icons8-add-shopping-cart-96.png'
-      },
-      {'labels': 'Hiburan', 'icon': 'assets/icons/icons8-entertainment-96.png'},
+      {'label': 'Gaji', 'icon': 'assets/icons/gaji.png'},
+      {'label': 'Investasi', 'icon': 'assets/icons/investasi.png'},
+      {'label': 'Bonus', 'icon': 'assets/icons/hadiah.png'},
+      {'label': 'Uang Saku', 'icon': 'assets/icons/uangsaku.png'},
+      {'label': 'Lainnya', 'icon': 'assets/icons/lainnya.png'},
     ];
 
     showModalBottomSheet(
@@ -1419,45 +1506,71 @@ class CashFlowView extends StatelessWidget {
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: 250,
+          height:
+              MediaQuery.of(context).size.height * 0.6, // 60% of screen height
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pilih Kategori Pendapatan',
+                'Pilih Kategori',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: kategoriPendapatanList.map((kategori) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Simpan kategori yang dipilih di controller
-                      controller.selectedKategori.value = kategori['label'];
-                      Navigator.pop(context); // Tutup bottom sheet
-                    },
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 30, // Ukuran icon
-                          backgroundColor: Colors.grey[200],
-                          child: Image.asset(
-                            kategori['icon'], // Menampilkan gambar dari assets
-                            width: 28, // Ukuran gambar
-                            height: 28,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          kategori['labels'], // Menggunakan 'labels' yang benar
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
+              Expanded(
+                child: SingleChildScrollView(
+                  child: GridView.builder(
+                    shrinkWrap:
+                        true, // Prevents GridView from expanding infinitely
+                    physics:
+                        NeverScrollableScrollPhysics(), // Disable GridView scrolling
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, // Number of columns in grid
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio:
+                          0.7, // Adjusted for better space for text
                     ),
-                  );
-                }).toList(),
+                    itemCount: kategoriPendapatanList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final kategori = kategoriPendapatanList[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Simpan kategori yang dipilih di controller
+                          controller.selectedKategori.value = kategori['label'];
+                          Navigator.pop(context); // Tutup bottom sheet
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 30, // Ukuran icon
+                              backgroundColor: Colors.grey[200],
+                              child: Image.asset(
+                                kategori[
+                                    'icon'], // Menampilkan gambar dari assets
+                                width: 28, // Ukuran gambar
+                                height: 28,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: 70, // Batasan lebar teks
+                              child: Text(
+                                kategori[
+                                    'label'], // Menggunakan 'labels' yang benar
+                                style: TextStyle(fontSize: 12),
+                                textAlign: TextAlign.center, // Rata tengah
+                                softWrap: true, // Mengizinkan pembungkusan teks
+                                overflow:
+                                    TextOverflow.visible, // Tidak overflow
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),
@@ -1466,5 +1579,3 @@ class CashFlowView extends StatelessWidget {
     );
   }
 }
-
-

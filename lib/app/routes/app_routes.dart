@@ -8,33 +8,33 @@ abstract class Routes {
   static const LOGIN = _Paths.LOGIN;
   static const REGISTER = _Paths.REGISTER;
   static const MASUK = _Paths.MASUK;
-  static const CASHFLOW = _Paths.CASHFLOW;
-  static const STATISTIC = _Paths.STATISTIC;
-  static const BATASPENGELUARAN = _Paths.BATASPENGELUARAN;
-  static const DASHBOARD = _Paths.DASHBOARD;
   static const PROFILE = _Paths.PROFILE;
+  static const DASHBOARD = _Paths.DASHBOARD;
   static const SALDO = _Paths.SALDO;
   static const TAMBAHAKUN = _Paths.TAMBAHAKUN;
   static const EDITSALDO = _Paths.EDITSALDO;
   static const TAMBAHCC = _Paths.TAMBAHCC;
   static const CREDITCARD = _Paths.CREDITCARD;
+  static const BATASPENGELUARAN = _Paths.BATASPENGELUARAN;
+  static const CASHFLOW = _Paths.CASHFLOW;
+  static const STATISTIC = _Paths.STATISTIC;
 }
 
 abstract class _Paths {
   _Paths._();
-  static const SPLASH = '/';
   static const HOME = '/home';
   static const LOGIN = '/login';
   static const REGISTER = '/register';
   static const MASUK = '/masuk';
-  static const CASHFLOW = '/cashflow';
-  static const STATISTIC = '/statistic';
-  static const BATASPENGELUARAN = '/batas';
-  static const DASHBOARD = '/dashboard';
   static const PROFILE = '/profile';
+  static const DASHBOARD = '/dashboard';
   static const SALDO = '/saldo';
   static const TAMBAHAKUN = '/tambahakun';
   static const EDITSALDO = '/editsaldo';
   static const TAMBAHCC = '/tambahcc';
   static const CREDITCARD = '/creditcard';
+  static const SPLASH = '/';
+  static const BATASPENGELUARAN = '/bataspengeluaran';
+  static const CASHFLOW = '/cashflow';
+  static const STATISTIC = '/statistic';
 }

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ngirit/app/modules/login/views/login_view.dart';
 
 class RegisterController extends GetxController {
   var username = ''.obs;
@@ -28,6 +29,7 @@ class RegisterController extends GetxController {
           password: password.value,
         );
 
+        // Simpan data pengguna ke koleksi 'users'
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -36,8 +38,20 @@ class RegisterController extends GetxController {
           'email': email.value,
         });
 
+        // Simpan data akun default ke koleksi 'accounts'
+        await FirebaseFirestore.instance
+            .collection('accounts')
+            .doc() // Menggunakan doc() tanpa parameter untuk ID otomatis
+            .set({
+          'nama_akun': 'Bank',
+          'saldo_awal': '1000000',
+          'icon': 'assets/icons/default_icon.png', // Simpan sebagai string
+          'user_id': userCredential.user!.uid,
+        });
+
         print("User registered successfully");
         Get.snackbar("Success", "Registered successfully");
+        Get.offAll(() => LoginView());
       } on FirebaseAuthException catch (e) {
         print("Registration failed: ${e.message}");
         Get.snackbar("Error", e.message ?? "Registration failed");

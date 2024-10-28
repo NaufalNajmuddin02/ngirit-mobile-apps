@@ -17,47 +17,70 @@ class StatisticController extends GetxController {
   var totalExpense = 0.obs; // Total pengeluaran
   var totalBalance = 0.obs; // Total saldo
   var pieChartData = <PieChartSectionData>[].obs;
+  var saldo = 0.obs; // Define saldo variable
+  var selectedTab = 0.obs; // New list for credit cards
+  var selectedAkun = ''.obs;
+  var selectedKategori = ''.obs;
+  var selectedDates = ''.obs;
+  var deskripsi = ''.obs;
+  var creditCards = <Map<String, dynamic>>[].obs;
+  var accounts = <Map<String, dynamic>>[].obs;
+  TextEditingController deskripsiController = TextEditingController();
 
-  var selectedYear = DateTime.now().obs;
+  TextEditingController nominalController = TextEditingController();
+
+  var selectedDate = DateTime.now().obs;
+
+  void onInit() {
+    fetchTotalIncome();
+    fetchTotalExpense();
+    fetchTotalBalance();
+    fetchIncome();
+    fetchExpense();
+    fetchExpenseByCategory();
+    listenToAccountUpdates();
+    listenToCreditCardUpdates();
+    super.onInit();
+  }
 
   // Ambil userId dari pengguna yang sedang login
   String get userId => _auth.currentUser?.uid ?? '';
 
   // Ambil bulan depan, sekarang, dan sebelumnya
   DateTime get startOfMonth =>
-      DateTime(selectedYear.value.year, selectedYear.value.month, 1);
+      DateTime(selectedDate.value.year, selectedDate.value.month, 1);
   DateTime get endOfMonth {
     final nextMonth =
-        DateTime(selectedYear.value.year, selectedYear.value.month + 1, 1);
+        DateTime(selectedDate.value.year, selectedDate.value.month + 1, 1);
     return nextMonth.subtract(Duration(days: 1));
   }
 
   // Ambil bulan depan, sekarang, dan sebelumnya
   String get nextMonth {
     final nextDate =
-        DateTime(selectedYear.value.year, selectedYear.value.month + 1);
+        DateTime(selectedDate.value.year, selectedDate.value.month + 1);
     return DateFormat('MMMM yyyy').format(nextDate);
   }
 
   String get selectedMonth =>
-      DateFormat('MMMM yyyy').format(selectedYear.value);
+      DateFormat('MMMM yyyy').format(selectedDate.value);
 
   String get previousMonth {
     final prevDate =
-        DateTime(selectedYear.value.year, selectedYear.value.month - 1);
+        DateTime(selectedDate.value.year, selectedDate.value.month - 1);
     return DateFormat('MMMM yyyy').format(prevDate);
   }
 
   // Method to change the month
   void changeMonth(int delta) {
-    final newMonth = selectedYear.value.month + delta;
-    final newYear = selectedYear.value.year +
+    final newMonth = selectedDate.value.month + delta;
+    final newYear = selectedDate.value.year +
         (newMonth > 12
             ? 1
             : newMonth < 1
                 ? -1
                 : 0);
-    selectedYear.value =
+    selectedDate.value =
         DateTime(newYear, (newMonth % 12) == 0 ? 12 : newMonth % 12);
     fetchTotalIncome();
     fetchTotalExpense();
@@ -178,10 +201,20 @@ class StatisticController extends GetxController {
         .listen((snapshot) {
       // Map untuk menyimpan total pengeluaran per kategori
       Map<String, double> categoryTotals = {
-        'Makanan': 0.0,
+        'Makan': 0.0,
         'Transportasi': 0.0,
         'Belanja': 0.0,
         'Hiburan': 0.0,
+        'Pendidikan': 0.0,
+        'Rumah Tangga': 0.0,
+        'Investasi': 0.0,
+        'Kesehatan': 0.0,
+        'Liburan': 0.0,
+        'Perbaikan Rumah': 0.0,
+        'Pakaian': 0.0,
+        'Internet': 0.0,
+        'Olahraga & Gym': 0.0,
+        'Lainnya': 0.0,
       };
 
       // Loop melalui dokumen snapshot
@@ -207,63 +240,90 @@ class StatisticController extends GetxController {
     pieChartData.value = [
       PieChartSectionData(
         color: Colors.green,
-        value: categoryTotals['Makanan'] ?? 0.0,
-        title: '${categoryTotals['Makanan']?.toStringAsFixed(1) ?? '0'}%',
+        value: categoryTotals['Makan'] ?? 0.0,
+        title: 'Makan', // Tampilkan nama kategori di title
         radius: 50,
       ),
       PieChartSectionData(
-        color: Colors.orange,
+        color: Colors.blue,
         value: categoryTotals['Transportasi'] ?? 0.0,
-        title: '${categoryTotals['Transportasi']?.toStringAsFixed(1) ?? '0'}%',
+        title: 'Transportasi',
         radius: 50,
       ),
       PieChartSectionData(
         color: Colors.red,
         value: categoryTotals['Belanja'] ?? 0.0,
-        title: '${categoryTotals['Belanja']?.toStringAsFixed(1) ?? '0'}%',
+        title: 'Belanja',
         radius: 50,
       ),
       PieChartSectionData(
-        color: Colors.blue,
+        color: Colors.purple,
         value: categoryTotals['Hiburan'] ?? 0.0,
-        title: '${categoryTotals['Hiburan']?.toStringAsFixed(1) ?? '0'}%',
+        title: 'Hiburan',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.orange,
+        value: categoryTotals['Pendidikan'] ?? 0.0,
+        title: 'Pendidikan',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.teal,
+        value: categoryTotals['Rumah Tangga'] ?? 0.0,
+        title: 'Rumah Tangga',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.indigo,
+        value: categoryTotals['Investasi'] ?? 0.0,
+        title: 'Investasi',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.pink,
+        value: categoryTotals['Kesehatan'] ?? 0.0,
+        title: 'Kesehatan',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.amber,
+        value: categoryTotals['Liburan'] ?? 0.0,
+        title: 'Liburan',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.cyan,
+        value: categoryTotals['Perbaikan Rumah'] ?? 0.0,
+        title: 'Perbaikan Rumah',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.lime,
+        value: categoryTotals['Pakaian'] ?? 0.0,
+        title: 'Pakaian',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.brown,
+        value: categoryTotals['Internet'] ?? 0.0,
+        title: 'Internet',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.grey,
+        value: categoryTotals['Olahraga & Gym'] ?? 0.0,
+        title: 'Olahraga & Gym',
+        radius: 50,
+      ),
+      PieChartSectionData(
+        color: Colors.black,
+        value: categoryTotals['Lainnya'] ?? 0.0,
+        title: 'Lainnya',
         radius: 50,
       ),
     ];
   }
-
-  // Inisialisasi dan fetch data saat controller dibuat
-  @override
-  void onInit() {
-    super.onInit();
-
-    fetchIncome();
-    fetchExpense();
-    fetchTotalIncome();
-    fetchTotalExpense();
-    fetchExpenseByCategory();
-
-    // Hitung ulang saldo ketika total pemasukan atau pengeluaran berubah
-    everAll([totalIncome, totalExpense], (_) {
-      fetchTotalBalance();
-    });
-    listenToAccountUpdates();
-    listenToCreditCardUpdates(); // New listener for credit cards
-  }
-
-  var selectedIndex = 0.obs;
-  var username = ''.obs;
-  var saldo = 0.obs; // Default saldo 0
-  var accounts = <Map<String, dynamic>>[].obs;
-  var creditCards = <Map<String, dynamic>>[].obs;
-  var selectedTab = 0.obs; // New list for credit cards
-  var selectedAkun = ''.obs;
-  var selectedKategori = ''.obs;
-  var selectedDate = ''.obs;
-  var deskripsi = ''.obs; // Variabel untuk menyimpan deskripsi
-
-  TextEditingController nominalController = TextEditingController();
-  TextEditingController deskripsiController = TextEditingController();
 
   void onClose() {
     deskripsiController.dispose();
@@ -271,49 +331,7 @@ class StatisticController extends GetxController {
     super.onClose();
   }
 
-  // Function to save form data to Firestore
-  Future<void> saveFormData(String nominal) async {
-    final controller = Get.find<StatisticController>();
-    String collection;
-    switch (controller.selectedTab.value) {
-      case 0:
-        collection = 'pengeluaran';
-        break;
-      case 1:
-        collection = 'pendapatan';
-        break;
-      case 2:
-        collection = 'transfer';
-        break;
-      default:
-        collection = 'pengeluaran';
-    }
-
-    if (controller.selectedKategori.isNotEmpty &&
-        controller.selectedAkun.isNotEmpty &&
-        controller.selectedDate.isNotEmpty) {
-      try {
-        User? user = FirebaseAuth.instance.currentUser;
-
-        if (user != null) {
-          await FirebaseFirestore.instance.collection(collection).add({
-            'user_id': user.uid,
-            'nominal': nominal,
-            'deskripsi': controller.deskripsi.value,
-            'kategori': controller.selectedKategori.value,
-            'akun': controller.selectedAkun.value,
-            'tanggal': controller.selectedDate.value,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
-      }
-    } else {
-      Get.snackbar('Error', 'Pastikan semua field diisi');
-    }
-  }
+  // Function to save form data to Firestor
 
   // Listen for account updates and calculate total saldo
   void listenToAccountUpdates() {
@@ -378,6 +396,49 @@ class StatisticController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load credit cards');
+    }
+  }
+
+  Future<void> saveFormData(String nominal) async {
+    final controller = Get.find<StatisticController>();
+    String collection;
+    switch (controller.selectedTab.value) {
+      case 0:
+        collection = 'pengeluaran';
+        break;
+      case 1:
+        collection = 'pendapatan';
+        break;
+      // case 2:
+      //   collection = 'transfer';
+      //   break;
+      default:
+        collection = 'pengeluaran';
+    }
+
+    if (controller.selectedKategori.isNotEmpty &&
+        controller.selectedAkun.isNotEmpty &&
+        controller.selectedDates.isNotEmpty) {
+      try {
+        User? user = FirebaseAuth.instance.currentUser;
+
+        if (user != null) {
+          await FirebaseFirestore.instance.collection(collection).add({
+            'user_id': user.uid,
+            'nominal': nominal,
+            'deskripsi': controller.deskripsi.value,
+            'kategori': controller.selectedKategori.value,
+            'akun': controller.selectedAkun.value,
+            'tanggal': controller.selectedDates.value,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
+        }
+      } catch (e) {
+        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
+      }
+    } else {
+      Get.snackbar('Error', 'Pastikan semua field diisi');
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/saldo_controller.dart';
 
 class SaldoView extends StatelessWidget {
@@ -136,15 +137,45 @@ class SaldoView extends StatelessWidget {
                                           ),
                                           SizedBox(height: 4),
                                           Text(
-                                            'Saldo',
+                                            'Saldo Akhir',
                                             style:
                                                 TextStyle(color: Colors.grey),
                                           ),
+                                          // Menampilkan saldo akhir
                                           Text(
-                                            'Rp. ${account['saldo_awal']}', // Menggunakan saldo sebagai String
+                                            'Rp. ${NumberFormat.currency(
+                                              locale: 'id',
+                                              symbol: '',
+                                              decimalDigits: 0,
+                                            ).format(account['saldo_akhir'])}', // Menggunakan saldo akhir
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+// Menampilkan pendapatan
+                                          Text(
+                                            'Pendapatan: Rp. ${NumberFormat.currency(
+                                              locale: 'id',
+                                              symbol: '',
+                                              decimalDigits: 0,
+                                            ).format(account['total_pendapatan'])}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+// Menampilkan pengeluaran
+                                          Text(
+                                            'Pengeluaran: Rp. ${NumberFormat.currency(
+                                              locale: 'id',
+                                              symbol: '',
+                                              decimalDigits: 0,
+                                            ).format(account['total_pengeluaran'])}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.red,
                                             ),
                                           ),
                                         ],
@@ -162,7 +193,8 @@ class SaldoView extends StatelessWidget {
                                             context: context,
                                             builder: (context) {
                                               saldoControllerText.text =
-                                                  account['saldo_awal'];
+                                                  account['saldo_awal']
+                                                      .toString();
                                               return AlertDialog(
                                                 title: Text('Edit Saldo'),
                                                 content: TextField(

@@ -27,17 +27,17 @@ class RegisterView extends StatelessWidget {
             children: [
               Center(
                 child: Image.asset(
-                  'assets/images/login.png', // Ganti dengan path gambar Anda
+                  'assets/images/Group.png', // Ganti dengan path gambar Anda
                   fit: BoxFit.cover,
-                  width: 150, // Atur ukuran gambar
-                  height: 150,
+                  width: 90, // Atur ukuran gambar
+                  height: 90,
                 ),
               ),
               Text(
                 'Register',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 32,
+                  fontSize: 30,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF31356E),
                 ),
@@ -50,16 +50,16 @@ class RegisterView extends StatelessWidget {
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 14),
               Text(
                 'Username',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 14),
               TextField(
                 decoration: InputDecoration(
                   filled: true,
@@ -75,16 +75,16 @@ class RegisterView extends StatelessWidget {
                 ),
                 onChanged: (value) => controller.username.value = value,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 14),
               Text(
                 'Email',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 14),
               TextField(
                 decoration: InputDecoration(
                   filled: true,
@@ -100,16 +100,16 @@ class RegisterView extends StatelessWidget {
                 ),
                 onChanged: (value) => controller.email.value = value,
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 14),
               Text(
                 'Password',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 14),
               Obx(() => TextField(
                     obscureText: !controller.passwordVisible.value,
                     decoration: InputDecoration(
@@ -132,16 +132,16 @@ class RegisterView extends StatelessWidget {
                     ),
                     onChanged: (value) => controller.password.value = value,
                   )),
-              SizedBox(height: 20),
+              SizedBox(height: 14),
               Text(
                 'Confirm Password',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 20,
+                  fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 14),
               Obx(() => TextField(
                     obscureText: !controller.confirmPasswordVisible.value,
                     decoration: InputDecoration(
@@ -165,7 +165,7 @@ class RegisterView extends StatelessWidget {
                     onChanged: (value) =>
                         controller.confirmPassword.value = value,
                   )),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

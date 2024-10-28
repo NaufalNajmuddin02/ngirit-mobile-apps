@@ -12,46 +12,125 @@ dependencies:
   firebase_auth: ^4.6.0
   cloud_firestore: ^4.5.0
   firebase_storage: ^11.6.9
+  fl_chart: 
+  intl : 
+  font_awesome_flutter:
+  icons_launcher: ^3.0.0
+  
+  images_picker:
+  marquee:
+  
   flutter: 
     sdk: flutter
-  intl: ^0.19.0
-  font_awesome_flutter: ^10.7.0
-  fl_chart: ^0.69.0
-  month_picker_dialog: ^5.1.3
   image_picker: ^1.1.2
 
 dev_dependencies: 
+  
   flutter_lints: ^3.0.0
   flutter_test: 
     sdk: flutter
 
+icons_launcher:
+  image_path: "/assets/images/login.png"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
+
+
 flutter: 
   uses-material-design: true
   assets:
-    - assets/images/splash_logo.png
-    - assets/images/onboarding_image.png
-    - assets/images/onboarding_image1.png
-    - assets/images/onboarding_image2.png
-    - assets/images/login.png
-    - assets/images/logo.png
-    - assets/images/ngirit.png
-    - assets/icons/bca.webp
-    - assets/icons/bni.jpg
-    - assets/icons/bri.png
-    - assets/icons/mandiri.svg
-    - assets/icons/paypal.webp
-    - assets/icons/car.png
-    - assets/icons/cinema.png
-    - assets/icons/shop.png
-    - assets/icons/food.png   
-    - assets/icons/icons8-add-shopping-cart-96.png
-    - assets/icons/icons8-cars-96.png
-    - assets/icons/icons8-eat-96.png
-    - assets/icons/icons8-entertainment-96.png
-    - assets/icons/icons8-no-96.png
-    - assets/images/default_profile.png
-
+     - assets/icons/
+     - assets/icons/alat.png
+     - assets/icons/anz.png
+     - assets/icons/bsi.png
+     - assets/icons/bca.png
+     - assets/icons/bca.webp
+     - assets/icons/bi.png
+     - assets/icons/bjb.png
+     - assets/icons/bni.jpg
+     - assets/icons/bni.png
+     - assets/icons/bri.png
+     - assets/icons/btn.png
+     - assets/icons/bukopin.png
+     - assets/icons/car.png
+     - assets/icons/cars.png
+     - assets/icons/cimb.png
+     - assets/icons/cinema.png
+     - assets/icons/citi.png
+     - assets/icons/danamon.png
+     - assets/icons/digibank.png
+     - assets/icons/food.png
+     - assets/icons/hiburan.png
+     - assets/icons/hiburan2.png
+     - assets/icons/hsbc.png
+     - assets/icons/icons8-no-96.png
+     - assets/icons/jago.png
+     - assets/icons/jenius.png
+     - assets/icons/makanan.png
+     - assets/icons/mandiri.png
+     - assets/icons/mandiri.svg
+     - assets/icons/maybank.png
+     - assets/icons/mega.png
+     - assets/icons/ocbc.png
+     - assets/icons/panin.png
+     - assets/icons/paypal.webp
+     - assets/icons/permata.png
+     - assets/icons/shop.png
+     - assets/icons/shop2.png
+     - assets/icons/standard chartered.png
+     - assets/icons/uob.png
+     - assets/images/onboarding_image1.png
+     - assets/images/onboarding_image2.png
+     - assets/images/onboarding_image.png
+     - assets/images/splash_logo.png
+     - assets/icons/car.png
+     - assets/icons/cinema.png
+     - assets/icons/shop.png
+     - assets/icons/food.png
+     - assets/icons/car.png
+     - assets/icons/food.png
+     - assets/icons/cars.png
+     - assets/icons/hiburan2.png
+     - assets/icons/shop2.png
+     - assets/icons/icons8-no-96.png
+     - assets/icons/makanan.png
+     - assets/icons/alat.png
+     - assets/icons/uangsaku.png
+     - assets/icons/lainnya.png
+     - assets/icons/investasi.png
+     - assets/icons/gaji.png
+     - assets/icons/hadiah.png
+     - assets/icons/internet.png
+     - assets/icons/outfit.png
+     - assets/icons/rumah.png
+     - assets/icons/kesehatan.png
+     - assets/icons/pendidikan.png
+     - assets/icons/gym.png
+     - assets/icons/internet.png
+     - assets/icons/rt.png
+     - assets/images/login.png
+     - assets/images/ngirit.png
+     - assets/icons/default_icon.png
+     - assets/images/logo.png
+     - assets/images/Group.png
+     - assets/images/default_profile.png
+    
   fonts:
     - family: Lilita One
       fonts:
         - asset: assets/fonts/LilitaOne-Regular.ttf
+        # - asset: assets/fonts/OpenSans-Italic-VariableFont_wdthwght.ttf
+
+    - family: Open Sans
+      fonts:
+        - asset: assets/fonts/OpenSans-Regular.ttf
+        - asset: assets/fonts/OpenSans-Bold.ttf
+        - asset: assets/fonts/OpenSans-Italic.ttf
+        - asset: assets/fonts/OpenSans-Light.ttf
+        - asset: assets/fonts/OpenSans-SemiBold.ttf
+        - asset: assets/fonts/OpenSans-ExtraBold.ttf
+        - asset: assets/fonts/OpenSans-ExtraBoldItalic.ttf
+        - asset: assets/fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf
