@@ -15,7 +15,8 @@ dependencies:
   fl_chart: 
   intl : 
   font_awesome_flutter:
-  icons_launcher: ^3.0.0
+  icons_launcher: ^2.0.7
+  flutter_launcher_icons: ^0.14.1
   
   images_picker:
   marquee:
@@ -30,13 +31,10 @@ dev_dependencies:
   flutter_test: 
     sdk: flutter
 
-icons_launcher:
-  image_path: "/assets/images/login.png"
-  platforms:
-    android:
-      enable: true
-    ios:
-      enable: true
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/ngirit.png"
 
 
 flutter: 
@@ -117,6 +115,7 @@ flutter:
      - assets/images/logo.png
      - assets/images/Group.png
      - assets/images/default_profile.png
+     - assets/icons/ngirit.png
     
   fonts:
     - family: Lilita One

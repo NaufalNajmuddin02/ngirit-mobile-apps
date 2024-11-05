@@ -51,8 +51,7 @@ class SaldoController extends GetxController {
 
           for (var doc in accountSnapshot.docs) {
             var accountData = doc.data();
-            String namaAkun = accountData['nama_akun'].toString().toUpperCase();
-
+            String namaAkun = accountData['nama_akun'];
             int saldoAwal = int.tryParse(accountData['saldo_awal']) ?? 0;
 
             // Stream real-time buat pendapatan
@@ -83,10 +82,9 @@ class SaldoController extends GetxController {
             });
 
             int saldoAkhir = saldoAwal + totalPendapatan - totalPengeluaran;
-
-            // Tambahin ke daftar akun
+            
             accounts.add({
-              'id': doc.id, // ID dokumen akun
+              'id': doc.id, 
               'nama_akun': accountData['nama_akun'],
               'saldo_awal': saldoAwal,
               'icon': accountData['icon'] ?? 'account_circle',
@@ -95,10 +93,8 @@ class SaldoController extends GetxController {
               'saldo_akhir': saldoAkhir,
             });
 
-            totalSaldoTemp += saldoAkhir; // Tambah saldo akhir ke total saldo
+            totalSaldoTemp += saldoAkhir;
           }
-
-          // Update total saldo di akhir proses
           totalSaldo.value = totalSaldoTemp;
         });
       }
@@ -111,10 +107,10 @@ class SaldoController extends GetxController {
   Future<void> updateSaldo(String id, String newSaldo) async {
     try {
       await FirebaseFirestore.instance.collection('accounts').doc(id).update({
-        'saldo_awal': newSaldo, // Mengupdate saldo sebagai String
+        'saldo_awal': newSaldo,
       });
       ;
-      listenToAccountUpdates(); // Ambil ulang data setelah update
+      listenToAccountUpdates(); 
     } catch (e) {
       print('Error updating saldo: $e');
     }

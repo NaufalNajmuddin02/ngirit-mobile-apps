@@ -13,15 +13,14 @@ class ProfileView extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Container dengan gradient yang sudah ada
           Container(
             width: double.infinity,
             height: 320,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF1B2247), // Midnight Blue
-                  Color(0xFF4971BB), // Steel Blue
+                  Color(0xFF1B2247),
+                  Color(0xFF4971BB),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -49,13 +48,11 @@ class ProfileView extends StatelessWidget {
                         backgroundColor: Colors.white,
                       );
                     }),
-                    // Icon edit gambar di atas CircleAvatar
                     Positioned(
                       right: 0,
                       bottom: 0,
                       child: InkWell(
                         onTap: () {
-                          // Menampilkan modal untuk pilih sumber gambar
                           _showImageSourceModal(context);
                         },
                         child: CircleAvatar(
@@ -85,7 +82,6 @@ class ProfileView extends StatelessWidget {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    // Menampilkan modal untuk edit profil
                     _showEditProfileModal(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -121,14 +117,11 @@ class ProfileView extends StatelessWidget {
               actions: [
                 IconButton(
                   icon: Icon(Icons.settings, color: Colors.black),
-                  onPressed: () {
-                    // Aksi untuk settings
-                  },
+                  onPressed: () {},
                 ),
               ],
             ),
           ),
-          // Konten lainnya
           Column(
             children: [
               SizedBox(height: 300),
@@ -190,7 +183,7 @@ class ProfileView extends StatelessWidget {
                   onPressed: () {
                     _saveProfileChanges();
                   },
-                  child: Text('Save Changes'),
+                  child: Text('Simpan Ubahan'),
                 ),
               ],
             ),
@@ -230,16 +223,12 @@ class ProfileView extends StatelessWidget {
   }
 
   void _saveProfileChanges() {
-    // Simpan username jika tidak kosong
     if (usernameController.text.isNotEmpty) {
       controller.updateUsername(usernameController.text);
     }
-
-    // Simpan password jika tidak kosong
     if (passwordController.text.isNotEmpty) {
       controller.updatePassword(passwordController.text);
     }
-
     Get.back();
     Get.snackbar('Sukses', 'Perubahan profil berhasil disimpan');
   }
@@ -259,9 +248,7 @@ class ProfileView extends StatelessWidget {
             title,
             style: TextStyle(fontSize: 18, color: Colors.black),
           ),
-          onTap: () {
-            // Aksi ketika ListTile ditekan
-          },
+          onTap: () {},
         ),
       ),
     );

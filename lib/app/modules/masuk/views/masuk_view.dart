@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
+
+import '../controllers/masuk_controller.dart';
 
 class MasukView extends StatelessWidget {
   @override
@@ -55,7 +58,7 @@ class MasukView extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Welcome To Your Saving Journey',
+                  'Selamat Datang di Perjalanan Menabung Anda',
                   style: TextStyle(
                     fontFamily: 'Lilita One',
                     fontSize: 32,
@@ -67,8 +70,8 @@ class MasukView extends StatelessWidget {
 
               // Teks placeholder
               Text(
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                textAlign: TextAlign.center,
+                'Kelola Uang Anda Lebih Mudah.',
+                textAlign: TextAlign.left,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[700],
@@ -85,7 +88,7 @@ class MasukView extends StatelessWidget {
                     Get.toNamed('/login');
                   },
                   child: Text(
-                    'Login',
+                    'Masuk',
                     style: TextStyle(
                       fontSize: 20,
                       fontFamily: 'Inter', // Menggunakan font Inter
@@ -112,7 +115,7 @@ class MasukView extends StatelessWidget {
                     Get.toNamed('/register');
                   },
                   child: Text(
-                    'Register',
+                    'Daftar',
                     style: TextStyle(
                       fontSize: 20,
                       fontFamily: 'Inter', // Menggunakan font Inter

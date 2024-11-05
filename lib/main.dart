@@ -5,8 +5,7 @@ import 'package:ngirit/app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase
-      .initializeApp(); // Pastikan ini ada dan diinisialisasi sebelum runApp
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 

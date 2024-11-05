@@ -27,14 +27,14 @@ class RegisterView extends StatelessWidget {
             children: [
               Center(
                 child: Image.asset(
-                  'assets/images/Group.png', // Ganti dengan path gambar Anda
+                  'assets/images/login.png', // Ganti dengan path gambar Anda
                   fit: BoxFit.cover,
-                  width: 90, // Atur ukuran gambar
-                  height: 90,
+                  width: 80, // Atur ukuran gambar
+                  height: 80,
                 ),
               ),
               Text(
-                'Register',
+                'Daftar',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 30,
@@ -42,29 +42,29 @@ class RegisterView extends StatelessWidget {
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 5),
               Text(
-                'Create an account to continue',
+                'Buat Akun Untuk Melanjutkan',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 10),
               Text(
-                'Username',
+                'Nama Pengguna',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 5),
               TextField(
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color(0xFFeaebf0),
-                  hintText: 'Enter your username',
+                  hintText: 'Masukan Nama pengguna Anda',
                   hintStyle: TextStyle(color: Color(0xFF8d90af)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -75,7 +75,7 @@ class RegisterView extends StatelessWidget {
                 ),
                 onChanged: (value) => controller.username.value = value,
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 10),
               Text(
                 'Email',
                 style: TextStyle(
@@ -84,12 +84,12 @@ class RegisterView extends StatelessWidget {
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 5),
               TextField(
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color(0xFFeaebf0),
-                  hintText: 'Enter your email',
+                  hintText: 'Masukan Email Anda',
                   hintStyle: TextStyle(color: Color(0xFF8d90af)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -100,22 +100,22 @@ class RegisterView extends StatelessWidget {
                 ),
                 onChanged: (value) => controller.email.value = value,
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 10),
               Text(
-                'Password',
+                'Kata Sandi',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 5),
               Obx(() => TextField(
                     obscureText: !controller.passwordVisible.value,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Color(0xFFeaebf0),
-                      hintText: 'Enter your password',
+                      hintText: 'Masukan Kata Sandi Anda',
                       hintStyle: TextStyle(color: Color(0xFF8d90af)),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -132,22 +132,22 @@ class RegisterView extends StatelessWidget {
                     ),
                     onChanged: (value) => controller.password.value = value,
                   )),
-              SizedBox(height: 14),
+              SizedBox(height: 10),
               Text(
-                'Confirm Password',
+                'Konfirmasi Kata Sandi',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,
                   color: Color(0xFF31356E),
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 5),
               Obx(() => TextField(
                     obscureText: !controller.confirmPasswordVisible.value,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Color(0xFFeaebf0),
-                      hintText: 'Confirm your password',
+                      hintText: 'Konfirmasi Kata Sandi Anda',
                       hintStyle: TextStyle(color: Color(0xFF8d90af)),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -171,7 +171,7 @@ class RegisterView extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: controller.register,
                   child: Text(
-                    'Register',
+                    'Daftar',
                     style: TextStyle(
                       fontSize: 20,
                       fontFamily: 'Inter',

@@ -20,7 +20,8 @@ class BataspengeluaranController extends GetxController {
   var creditCards = <Map<String, dynamic>>[].obs;
 
   TextEditingController deskripsiController = TextEditingController();
-
+  TextEditingController pengeluaranController = TextEditingController();
+  TextEditingController pendapatanController = TextEditingController();
   TextEditingController nominalController = TextEditingController();
 
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -54,7 +55,8 @@ class BataspengeluaranController extends GetxController {
   DateTime get endOfMonth {
     final nextMonth =
         DateTime(selectedDate.value.year, selectedDate.value.month + 1, 1);
-    return nextMonth.subtract(Duration(days: 1));
+    return nextMonth.subtract(
+        Duration(seconds: 1)); // Memastikan akhir bulan hingga 23:59:59
   }
 
   String get nextMonth {
@@ -128,23 +130,23 @@ class BataspengeluaranController extends GetxController {
   // Fungsi untuk mengambil data transaksi dari Firestore
 
   void fetchTransactions() {
-    if (userId == null) return; // Jika userId null, hentikan
+    if (userId == null) return; // If userId is null, stop
 
     try {
       firestore
           .collection('batas_pengeluaran')
-          .where('user_id', isEqualTo: userId) // Filter berdasarkan user_id
+          .where('user_id', isEqualTo: userId) // Filter by user_id
           .where('tanggal', isGreaterThanOrEqualTo: startOfMonth)
           .where('tanggal', isLessThanOrEqualTo: endOfMonth)
           .snapshots()
           .listen((snapshot) async {
         print("Jumlah data yang diambil: ${snapshot.docs.length}");
 
-        // Ambil data transaksi secara real-time
+        // Fetch transaction data in real-time
         transactions.value = await Future.wait(snapshot.docs.map((doc) async {
           String category = doc['kategori'];
 
-          // Ambil semua pengeluaran dari koleksi 'pengeluaran' berdasarkan kategori
+          // Get all expenditures from 'pengeluaran' collection based on category
           QuerySnapshot pengeluaranSnapshot = await firestore
               .collection('pengeluaran')
               .where('kategori', isEqualTo: category)
@@ -158,8 +160,14 @@ class BataspengeluaranController extends GetxController {
           pengeluaranSnapshot.docs.forEach((pengeluaranDoc) {
             Map<String, dynamic> data =
                 pengeluaranDoc.data() as Map<String, dynamic>;
-            if (data.containsKey('nominal')) {
-              totalNominal += double.parse(data['nominal']);
+
+            // Check if 'nominal' exists and is a valid number before parsing
+            if (data.containsKey('nominal') && data['nominal'] != null) {
+              try {
+                totalNominal += double.parse(data['nominal'].toString());
+              } catch (e) {
+                print("Error parsing nominal: ${data['nominal']} - $e");
+              }
             }
           });
 
@@ -244,35 +252,140 @@ class BataspengeluaranController extends GetxController {
       case 1:
         collection = 'pendapatan';
         break;
-
       default:
         collection = 'pengeluaran';
     }
 
-    if (controller.selectedKategori.isNotEmpty &&
-        controller.selectedAkun.isNotEmpty &&
-        controller.selectedDates.isNotEmpty) {
-      try {
-        User? user = FirebaseAuth.instance.currentUser;
-
-        if (user != null) {
-          await FirebaseFirestore.instance.collection(collection).add({
-            'user_id': user.uid,
-            'nominal': nominal,
-            'deskripsi': controller.deskripsi.value,
-            'kategori': controller.selectedKategori.value,
-            'akun': controller.selectedAkun.value,
-            'tanggal': controller.selectedDate.value,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
-      }
-    } else {
-      Get.snackbar('Error', 'Pastikan semua field diisi');
+    // Form validation to ensure all fields are filled
+    if (nominal.isEmpty || nominal == '0,00') {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Nominal tidak boleh kosong atau nol",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
     }
+
+    if (controller.deskripsi.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Deskripsi tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedKategori.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Kategori tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedAkun.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Akun tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedDates.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Tanggal tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Menghapus ',' dari nominal sebelum disimpan
+        String sanitizedNominal = nominal.replaceAll(',', '');
+
+        await FirebaseFirestore.instance.collection(collection).add({
+          'user_id': user.uid,
+          'nominal':
+              sanitizedNominal, // Menggunakan sanitizedNominal tanpa koma
+          'deskripsi': controller.deskripsi.value,
+          'kategori': controller.selectedKategori.value,
+          'akun': controller.selectedAkun.value,
+          'tanggal': controller.selectedDates.value,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Show a success notification and close the modal dialog after saving
+        Get.defaultDialog(
+          title: "Berhasil",
+          middleText: "Data berhasil disimpan ke $collection",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            Get.back(); // Close the success dialog
+            Get.back(); // Close the form modal after successful save
+          },
+        );
+        // Reset form inputs
+        controller.nominalController.clear();
+        controller.deskripsiController.clear();
+        controller.selectedKategori.value = '';
+        controller.selectedAkun.value = '';
+        controller.selectedDates.value = '';
+      }
+    } catch (e) {
+      // Show an error notification
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Gagal menyimpan data ke $collection",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+    }
+  }
+
+  void clearForm(int selectedTab) {
+    if (selectedTab == 0) {
+      // Kosongkan controller untuk Pengeluaran
+      pengeluaranController.clear();
+    } else if (selectedTab == 1) {
+      // Kosongkan controller untuk Pendapatan
+      pendapatanController.clear();
+    }
+  }
+
+  void resetFormData() {
+    // Reset controller teks
+    deskripsiController.clear();
+
+    // Reset nominal (pastikan ini adalah controller nominal yang benar)
+    if (selectedTab.value == 0) {
+      pengeluaranController.clear();
+    } else {
+      pendapatanController.clear();
+    }
+
+    // Reset semua variabel yang diperlukan
+    selectedKategori.value = ''; // Reset kategori
+    selectedAkun.value = ''; // Reset akun
+    selectedDates.value = ''; // Reset tanggal
+    deskripsi.value = ''; // Reset deskripsi
   }
 
   void listenToAccountUpdates() {

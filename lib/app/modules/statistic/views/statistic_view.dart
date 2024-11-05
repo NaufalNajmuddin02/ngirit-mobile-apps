@@ -1,9 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/statistic_controller.dart';
+
+class NumberInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat.decimalPattern('en');
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    // Jika input kosong, tidak perlu diformat
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Hapus semua pemisah lama agar hanya tersisa angka
+    final intSelectionIndex = newValue.selection.baseOffset;
+    final String pureNumber = newValue.text.replaceAll(',', '');
+
+    // Format angka dengan pemisah ribuan
+    final newText = _formatter.format(int.parse(pureNumber));
+
+    // Kembalikan nilai baru dengan posisi kursor yang benar
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: intSelectionIndex + (newText.length - pureNumber.length),
+      ),
+    );
+  }
+}
 
 class StatisticView extends GetView<StatisticController> {
   final StatisticController controller = Get.put(StatisticController());
@@ -243,19 +272,19 @@ class StatisticView extends GetView<StatisticController> {
                                 Text('Pengeluaran'),
                               ],
                             ),
-                            Column(
-                              children: [
-                                Obx(() => Text(
-                                      // Format nilai totalBalance dengan format rupiah
-                                      '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.totalBalance.value)}',
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )),
-                                Text('Saldo'),
-                              ],
-                            ),
+                            // Column(
+                            //   children: [
+                            //     Obx(() => Text(
+                            //           // Format nilai totalBalance dengan format rupiah
+                            //           '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.totalBalance.value)}',
+                            //           style: TextStyle(
+                            //             color: Colors.blue,
+                            //             fontWeight: FontWeight.bold,
+                            //           ),
+                            //         )),
+                            //     Text('Saldo'),
+                            //   ],
+                            // ),
                           ],
                         ),
                       ],
@@ -438,10 +467,6 @@ class StatisticView extends GetView<StatisticController> {
                       backgroundColor =
                           Colors.green; // Warna hijau untuk Pendapatan
                       break;
-                    // case 2:
-                    //   backgroundColor =
-                    //       Colors.blue; // Warna biru untuk Transfer
-                    //   break;
                     default:
                       backgroundColor = Colors.red;
                   }
@@ -458,7 +483,6 @@ class StatisticView extends GetView<StatisticController> {
                           children: [
                             _buildTabItem('Pengeluaran', Colors.red, 0),
                             _buildTabItem('Pendapatan', Colors.green, 1),
-                            // _buildTabItem('Transfer', Colors.blue, 2),
                           ],
                         ),
                         // Input angka "0,00" di dalam background color
@@ -469,8 +493,10 @@ class StatisticView extends GetView<StatisticController> {
                               Spacer(), // Menggeser input ke kanan
                               Expanded(
                                 child: TextField(
-                                  controller:
-                                      nominalController, // Menggunakan controller
+                                  controller: controller.selectedTab.value == 0
+                                      ? controller.pengeluaranController
+                                      : controller
+                                          .pendapatanController, // Controller per tab
                                   keyboardType: TextInputType.number,
                                   textAlign:
                                       TextAlign.right, // Teks sejajar kanan
@@ -487,8 +513,12 @@ class StatisticView extends GetView<StatisticController> {
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter
+                                        .digitsOnly, // Hanya menerima angka
+                                    NumberInputFormatter(), // Formatter angka dengan pemisah ribuan
+                                  ],
                                 ),
-// Hilangkan koma yang tidak perlu di sini
                               ),
                             ],
                           ),
@@ -521,25 +551,30 @@ class StatisticView extends GetView<StatisticController> {
                               return _buildPengeluaranForm(context);
                             case 1:
                               return _buildPendapatanForm(context);
-                            // case 2:
-                            //   return _buildTransferForm();
                             default:
                               return _buildPengeluaranForm(context);
                           }
                         }),
                         SizedBox(height: 20),
                         // Tombol Save di bagian bawah BottomSheet
-                        // Tombol Save di bagian bawah BottomSheet
                         Align(
                           alignment: Alignment.bottomCenter,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Ambil nilai nominal dari nominalController sebagai String
-                              String nominal = nominalController.text;
+                              // Ambil nilai nominal dari controller yang sesuai
+                              String nominal = controller.selectedTab.value == 0
+                                  ? controller.pengeluaranController.text
+                                  : controller.pendapatanController.text;
 
                               // Panggil fungsi untuk menyimpan data ke Firebase
-                              controller.saveFormData(
-                                  nominal); // Panggil saveFormData() dari controller
+                              controller.saveFormData(nominal);
+
+                              // Kosongkan form setelah data disimpan
+                              controller
+                                  .clearForm(controller.selectedTab.value);
+
+                              // Tutup BottomSheet setelah menyimpan
+                              Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(
@@ -550,7 +585,7 @@ class StatisticView extends GetView<StatisticController> {
                               backgroundColor: Colors.blue, // Warna tombol
                             ),
                             child: Text(
-                              'Save',
+                              'Simpan',
                               style:
                                   TextStyle(fontSize: 18, color: Colors.white),
                             ),
@@ -568,15 +603,28 @@ class StatisticView extends GetView<StatisticController> {
     );
   }
 
-// Fungsi untuk membuat text field di dalam bottom sheet
-// Fungsi untuk membuat TabItem di dalam bottom sheet
+  // Fungsi untuk membuat TabItem di dalam bottom sheet
   Widget _buildTabItem(String title, Color color, int index) {
     return Expanded(
       child: Obx(() {
         bool isSelected = controller.selectedTab.value == index;
         return GestureDetector(
           onTap: () {
+            // Jika tab saat ini berbeda dari tab yang diklik, reset semua data form
+            if (controller.selectedTab.value != index) {
+              controller.resetFormData();
+            }
+
+            // Set selected tab dan kosongkan controller sesuai tab yang dipilih
             controller.selectedTab.value = index;
+
+            if (index == 0) {
+              controller.pengeluaranController
+                  .clear(); // Bersihkan semua field di tab Pengeluaran
+            } else if (index == 1) {
+              controller.pendapatanController
+                  .clear(); // Bersihkan semua field di tab Pendapatan
+            }
           },
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -592,7 +640,7 @@ class StatisticView extends GetView<StatisticController> {
                   child: Text(
                     title,
                     style: TextStyle(
-                      color: Colors.white, // Selalu putih untuk teks
+                      color: Colors.white, // Teks selalu putih
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1049,10 +1097,10 @@ class StatisticView extends GetView<StatisticController> {
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
-      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
-      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/makanan.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/cars.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop2.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/hiburan.png'},
       {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
       {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
       {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 class CashflowController extends GetxController {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   FirebaseAuth _auth = FirebaseAuth.instance;
+  TextEditingController pengeluaranController = TextEditingController();
+  TextEditingController pendapatanController = TextEditingController();
 
   var income = <Map<String, dynamic>>[].obs; // Store detailed income data
   var expense = <Map<String, dynamic>>[].obs; // Store detailed expense data
@@ -109,7 +112,8 @@ class CashflowController extends GetxController {
   DateTime get endOfMonth {
     final nextMonth =
         DateTime(selectedDate.value.year, selectedDate.value.month + 1, 1);
-    return nextMonth.subtract(Duration(days: 1));
+    return nextMonth.subtract(
+        Duration(seconds: 1)); // Memastikan akhir bulan hingga 23:59:59
   }
 
   // Ambil bulan depan, sekarang, dan sebelumnya
@@ -260,7 +264,6 @@ class CashflowController extends GetxController {
   var selectedTab = 0.obs; // New list for credit cards
   var selectedAkun = ''.obs;
   var selectedKategori = ''.obs;
-
   var deskripsi = ''.obs; // Variabel untuk menyimpan deskripsi
 
   TextEditingController nominalController = TextEditingController();
@@ -271,8 +274,6 @@ class CashflowController extends GetxController {
     nominalController.dispose(); // Dispose nominalController juga
     super.onClose();
   }
-
-  // Function to save form data to Firestor
 
   // Listen for account updates and calculate total saldo
   void listenToAccountUpdates() {
@@ -341,8 +342,11 @@ class CashflowController extends GetxController {
   }
 
   Future<void> saveFormData(String nominal) async {
-    final controller = Get.find<CashflowController>();
+    final controller = Get.find<
+        CashflowController>(); // Assuming CashflowController is being used
     String collection;
+
+    // Determine the collection based on the selected tab
     switch (controller.selectedTab.value) {
       case 0:
         collection = 'pengeluaran';
@@ -350,38 +354,139 @@ class CashflowController extends GetxController {
       case 1:
         collection = 'pendapatan';
         break;
-      // case 2:
-      //   collection = 'transfer';
-      //   break;
       default:
         collection = 'pengeluaran';
     }
 
-    if (controller.selectedKategori.isNotEmpty &&
-        controller.selectedAkun.isNotEmpty &&
-        controller.selectedDates.isNotEmpty) {
-      try {
-        User? user = FirebaseAuth.instance.currentUser;
+    // Form validation to ensure all fields are filled
+    if (nominal.isEmpty || nominal == '0,00') {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Nominal tidak boleh kosong atau nol",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
 
-        if (user != null) {
-          await FirebaseFirestore.instance.collection(collection).add({
-            'user_id': user.uid,
-            'nominal': nominal,
-            'deskripsi': controller.deskripsi.value,
-            'kategori': controller.selectedKategori.value,
-            'akun': controller.selectedAkun.value,
-            'tanggal': controller.selectedDates.value,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
+    if (controller.deskripsi.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Deskripsi tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedKategori.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Kategori tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedAkun.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Akun tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedDates.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Tanggal tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Menghapus ',' dari nominal sebelum disimpan
+        String sanitizedNominal = nominal.replaceAll(',', '');
+
+        await FirebaseFirestore.instance.collection(collection).add({
+          'user_id': user.uid,
+          'nominal':
+              sanitizedNominal, // Menggunakan sanitizedNominal tanpa koma
+          'deskripsi': controller.deskripsi.value,
+          'kategori': controller.selectedKategori.value,
+          'akun': controller.selectedAkun.value,
+          'tanggal': controller.selectedDates.value,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Show a success notification and close the modal dialog after saving
+        Get.defaultDialog(
+          title: "Berhasil",
+          middleText: "Data berhasil disimpan ke $collection",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            Get.back(); // Close the success dialog
+            Get.back(); // Close the form modal after successful save
+          },
+        );
+        // Reset form inputs
+        controller.nominalController.clear();
+        controller.deskripsiController.clear();
+        controller.selectedKategori.value = '';
+        controller.selectedAkun.value = '';
+        controller.selectedDates.value = '';
       }
-    } else {
-      Get.snackbar('Error', 'Pastikan semua field diisi');
+    } catch (e) {
+      // Show an error notification
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Gagal menyimpan data ke $collection",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
     }
   }
 
-  // Calculate total expenses
+  void clearForm(int selectedTab) {
+    if (selectedTab == 0) {
+      // Kosongkan controller untuk Pengeluaran
+      pengeluaranController.clear();
+    } else if (selectedTab == 1) {
+      // Kosongkan controller untuk Pendapatan
+      pendapatanController.clear();
+    }
+  }
+
+  void resetFormData() {
+    // Reset controller teks
+    deskripsiController.clear();
+
+    // Reset nominal (pastikan ini adalah controller nominal yang benar)
+    if (selectedTab.value == 0) {
+      pengeluaranController.clear();
+    } else {
+      pendapatanController.clear();
+    }
+
+    // Reset semua variabel yang diperlukan
+    selectedKategori.value = ''; // Reset kategori
+    selectedAkun.value = ''; // Reset akun
+    selectedDates.value = ''; // Reset tanggal
+    deskripsi.value = ''; // Reset deskripsi
+  }
 }

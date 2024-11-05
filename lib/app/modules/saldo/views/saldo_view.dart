@@ -154,7 +154,7 @@ class SaldoView extends StatelessWidget {
                                             ),
                                           ),
                                           SizedBox(height: 4),
-// Menampilkan pendapatan
+                                         // Menampilkan pendapatan
                                           Text(
                                             'Pendapatan: Rp. ${NumberFormat.currency(
                                               locale: 'id',

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,8 +23,9 @@ class DashboardController extends GetxController {
   var deskripsi = ''.obs; // Variabel untuk menyimpan deskripsi
   var profileImageUrl = ''.obs;
   TextEditingController deskripsiController = TextEditingController();
-
   TextEditingController nominalController = TextEditingController();
+  TextEditingController pengeluaranController = TextEditingController();
+  TextEditingController pendapatanController = TextEditingController();
   @override
   @override
   void onClose() {
@@ -88,94 +90,105 @@ class DashboardController extends GetxController {
     }
   }
 
-  // Listen for account updates and calculate total saldo
-  void listenToAccountUpdates() {
+// Listen for account updates and calculate total saldo
+  void listenToAccountUpdates() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Mengawasi perubahan pada koleksi 'accounts'
+        // Listen to account changes
         FirebaseFirestore.instance
             .collection('accounts')
             .where('user_id', isEqualTo: user.uid)
             .snapshots()
             .listen((accountSnapshot) async {
-          accounts.clear();
-          var totalSaldo = 0;
+          await _recalculateSaldo(user);
+        });
 
-          // Looping secara asinkron untuk setiap dokumen akun
-          for (var doc in accountSnapshot.docs) {
-            var accountData = doc.data();
-            String namaAkun = accountData['nama_akun'].toString().toUpperCase();
+        // Listen to income (pendapatan) changes
+        FirebaseFirestore.instance
+            .collection('pendapatan')
+            .where('user_id', isEqualTo: user.uid)
+            .snapshots()
+            .listen((_) async {
+          await _recalculateSaldo(user);
+        });
 
-            // Ambil saldo awal dari koleksi accounts
-            int saldoAwal = int.tryParse(accountData['saldo_awal']) ?? 0;
-
-            // Stream real-time untuk pendapatan
-            var pendapatanStream = FirebaseFirestore.instance
-                .collection('pendapatan')
-                .where('akun', isEqualTo: namaAkun)
-                .where('user_id', isEqualTo: user.uid)
-                .snapshots();
-
-            // Stream real-time untuk pengeluaran
-            var pengeluaranStream = FirebaseFirestore.instance
-                .collection('pengeluaran')
-                .where('akun', isEqualTo: namaAkun)
-                .where('user_id', isEqualTo: user.uid)
-                .snapshots();
-
-            // Mendengarkan stream pendapatan dan pengeluaran secara paralel
-            var pendapatanSnapshot = await pendapatanStream.first;
-            var pengeluaranSnapshot = await pengeluaranStream.first;
-
-            // Hitung total pendapatan
-            int totalPendapatan = pendapatanSnapshot.docs.fold(0, (total, doc) {
-              return total + (int.tryParse(doc['nominal']) ?? 0);
-            });
-
-            // Hitung total pengeluaran
-            int totalPengeluaran =
-                pengeluaranSnapshot.docs.fold(0, (total, doc) {
-              return total + (int.tryParse(doc['nominal']) ?? 0);
-            });
-
-            // Hitung saldo akhir
-            int saldoAkhir = saldoAwal + totalPendapatan - totalPengeluaran;
-
-            // Cek apakah akun sudah ada di list
-            var existingAccountIndex = accounts.indexWhere(
-                (account) => account['nama_akun'] == accountData['nama_akun']);
-            if (existingAccountIndex != -1) {
-              accounts[existingAccountIndex] = {
-                'nama_akun': accountData['nama_akun'],
-                'saldo_awal': saldoAwal,
-                'icon': accountData['icon'] ?? '',
-                'total_pendapatan': totalPendapatan,
-                'total_pengeluaran': totalPengeluaran,
-                'saldo_akhir': saldoAkhir,
-              };
-            } else {
-              accounts.add({
-                'nama_akun': accountData['nama_akun'],
-                'saldo_awal': saldoAwal,
-                'icon': accountData['icon'] ?? '',
-                'total_pendapatan': totalPendapatan,
-                'total_pengeluaran': totalPengeluaran,
-                'saldo_akhir': saldoAkhir,
-              });
-            }
-
-            // Menambahkan saldo akhir ke total saldo
-            totalSaldo += saldoAkhir;
-          }
-
-          // Mengupdate nilai total saldo setelah looping selesai
-          saldo.value = totalSaldo;
+        // Listen to expense (pengeluaran) changes
+        FirebaseFirestore.instance
+            .collection('pengeluaran')
+            .where('user_id', isEqualTo: user.uid)
+            .snapshots()
+            .listen((_) async {
+          await _recalculateSaldo(user);
         });
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to load accounts: ${e.toString()}');
     }
+  }
+
+// Helper function to recalculate saldo
+  Future<void> _recalculateSaldo(User user) async {
+    accounts.clear();
+    var totalSaldo = 0;
+
+    var accountSnapshot = await FirebaseFirestore.instance
+        .collection('accounts')
+        .where('user_id', isEqualTo: user.uid)
+        .get();
+
+    for (var doc in accountSnapshot.docs) {
+      var accountData = doc.data();
+      String namaAkun = accountData['nama_akun'];
+      int saldoAwal = int.tryParse(accountData['saldo_awal']) ?? 0;
+
+      // Calculate total pendapatan for this account
+      var pendapatanSnapshot = await FirebaseFirestore.instance
+          .collection('pendapatan')
+          .where('akun', isEqualTo: namaAkun)
+          .where('user_id', isEqualTo: user.uid)
+          .get();
+      int totalPendapatan = pendapatanSnapshot.docs.fold(
+          0, (total, doc) => total + int.tryParse(doc['nominal'] ?? '0')!);
+
+      // Calculate total pengeluaran for this account
+      var pengeluaranSnapshot = await FirebaseFirestore.instance
+          .collection('pengeluaran')
+          .where('akun', isEqualTo: namaAkun)
+          .where('user_id', isEqualTo: user.uid)
+          .get();
+      int totalPengeluaran = pengeluaranSnapshot.docs.fold(
+          0, (total, doc) => total + int.tryParse(doc['nominal'] ?? '0')!);
+
+      int saldoAkhir = saldoAwal + totalPendapatan - totalPengeluaran;
+
+      var existingAccountIndex = accounts.indexWhere(
+          (account) => account['nama_akun'] == accountData['nama_akun']);
+      if (existingAccountIndex != -1) {
+        accounts[existingAccountIndex] = {
+          'nama_akun': accountData['nama_akun'],
+          'saldo_awal': saldoAwal,
+          'icon': accountData['icon'] ?? '',
+          'total_pendapatan': totalPendapatan,
+          'total_pengeluaran': totalPengeluaran,
+          'saldo_akhir': saldoAkhir,
+        };
+      } else {
+        accounts.add({
+          'nama_akun': accountData['nama_akun'],
+          'saldo_awal': saldoAwal,
+          'icon': accountData['icon'] ?? '',
+          'total_pendapatan': totalPendapatan,
+          'total_pengeluaran': totalPengeluaran,
+          'saldo_akhir': saldoAkhir,
+        });
+      }
+
+      totalSaldo += saldoAkhir;
+    }
+
+    saldo.value = totalSaldo;
+    print("Total Saldo: $totalSaldo");
   }
 
   // New function: Listen for credit card updates
@@ -243,10 +256,11 @@ class DashboardController extends GetxController {
     return pengeluaranPerCard[namaKartu] ?? 0.0;
   }
 
-  // Function to save form data to Firestore
   Future<void> saveFormData(String nominal) async {
     final controller = Get.find<DashboardController>();
     String collection;
+
+    // Menentukan koleksi berdasarkan tab yang dipilih
     switch (controller.selectedTab.value) {
       case 0:
         collection = 'pengeluaran';
@@ -254,36 +268,111 @@ class DashboardController extends GetxController {
       case 1:
         collection = 'pendapatan';
         break;
-      // case 2:
-      //   collection = 'transfer';
-      //   break;
       default:
         collection = 'pengeluaran';
     }
 
-    if (controller.selectedKategori.isNotEmpty &&
-        controller.selectedAkun.isNotEmpty &&
-        controller.selectedDate.isNotEmpty) {
-      try {
-        User? user = FirebaseAuth.instance.currentUser;
+    // Validasi form: Pastikan semua field diisi sebelum menyimpan
+    if (nominal.isEmpty || nominal == '0,00') {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Nominal tidak boleh kosong atau nol",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
 
-        if (user != null) {
-          await FirebaseFirestore.instance.collection(collection).add({
-            'user_id': user.uid,
-            'nominal': nominal,
-            'deskripsi': controller.deskripsi.value,
-            'kategori': controller.selectedKategori.value,
-            'akun': controller.selectedAkun.value,
-            'tanggal': controller.selectedDate.value,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
+    if (controller.deskripsi.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Deskripsi tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedKategori.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Kategori tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedAkun.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Akun tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedDate.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Tanggal tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Menghapus ',' dari nominal sebelum disimpan
+        String sanitizedNominal = nominal.replaceAll(',', '');
+
+        await FirebaseFirestore.instance.collection(collection).add({
+          'user_id': user.uid,
+          'nominal':
+              sanitizedNominal, // Menggunakan sanitizedNominal tanpa koma
+          'deskripsi': controller.deskripsi.value,
+          'kategori': controller.selectedKategori.value,
+          'akun': controller.selectedAkun.value,
+          'tanggal': controller.selectedDate.value,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Tampilkan dialog notifikasi sukses di tengah
+        Get.defaultDialog(
+          title: "Berhasil",
+          middleText: "Data berhasil disimpan ke $collection",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            Get.back(); // Tutup dialog saat tombol OK ditekan
+          },
+        );
+        controller.nominalController.clear();
+        controller.deskripsiController.clear();
+        controller.selectedKategori.value = '';
+        controller.selectedAkun.value = '';
+        controller.selectedDate.value = '';
       }
-    } else {
-      Get.snackbar('Error', 'Pastikan semua field diisi');
+    } catch (e) {
+      // Tampilkan dialog notifikasi error di tengah
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Gagal menyimpan data ke $collection",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () {
+          Get.back(); // Tutup dialog saat tombol OK ditekan
+        },
+      );
     }
   }
 

@@ -30,12 +30,12 @@ class LoginView extends StatelessWidget {
             children: [
               Center(
                 child: Image.asset(
-                  'assets/images/Group.png', // Ganti dengan path gambar Anda
+                  'assets/images/login.png', // Ganti dengan path gambar Anda
                   fit: BoxFit.cover, // Atur ukuran gambar
                 ),
               ),
               Text(
-                'Login',
+                'Masuk',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 32,
@@ -44,7 +44,7 @@ class LoginView extends StatelessWidget {
                 ),
               ),
               Text(
-                'manage money easier',
+                'Masuk Untuk Menggunakan Aplikasi',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -55,7 +55,7 @@ class LoginView extends StatelessWidget {
                 'Email',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 16,
+                  fontSize: 20,
                   color: Color(0xFF31356E),
                 ),
               ),
@@ -67,7 +67,7 @@ class LoginView extends StatelessWidget {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Color(0xFFeaebf0),
-                    hintText: 'Enter your email',
+                    hintText: 'Masukan email Anda',
                     hintStyle: TextStyle(
                       color: Color(0xFF8d90af),
                     ),
@@ -85,10 +85,10 @@ class LoginView extends StatelessWidget {
               ),
               SizedBox(height: 20),
               Text(
-                'Password',
+                'Kata Sandi',
                 style: TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 16,
+                  fontSize: 20,
                   color: Color(0xFF31356E),
                 ),
               ),
@@ -100,7 +100,7 @@ class LoginView extends StatelessWidget {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Color(0xFFeaebf0),
-                        hintText: 'Enter your password',
+                        hintText: 'Masukan Kata Sandi Anda',
                         hintStyle: TextStyle(
                           color: Color(0xFF8d90af),
                         ),
@@ -135,7 +135,7 @@ class LoginView extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: controller.login,
                         child: Text(
-                          'Login',
+                          'Masuk',
                           style: TextStyle(
                             fontSize: 20,
                             fontFamily: 'Inter',
@@ -151,71 +151,6 @@ class LoginView extends StatelessWidget {
                     )),
               SizedBox(height: 20),
 
-              // Divider dengan teks di tengah
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey[600],
-                      thickness: 1,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      'or login with',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: Colors.grey[600],
-                      thickness: 1,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-
-              // Opsi login dengan Facebook, Google, dan Apple
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Implement login dengan Facebook
-                    },
-                    icon: Icon(Icons.facebook, color: Colors.white),
-                    label: Text(''),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF3b5998), // Warna Facebook
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Implement login dengan Google
-                    },
-                    icon: Icon(Icons.g_mobiledata, color: Colors.white),
-                    label: Text(''),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFDB4437), // Warna Google
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Implement login dengan Apple
-                    },
-                    icon: Icon(Icons.apple, color: Colors.white),
-                    label: Text(''),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF000000), // Warna Apple
-                    ),
-                  ),
-                ],
-              ),
               SizedBox(height: 5), // Jarak setelah opsi login
 
               // Teks untuk registrasi
@@ -224,9 +159,9 @@ class LoginView extends StatelessWidget {
                   text: TextSpan(
                     style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     children: [
-                      TextSpan(text: "Don’t have an account? "),
+                      TextSpan(text: "Tidak Memiliki Akun? "),
                       TextSpan(
-                        text: "Register",
+                        text: "Daftar",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,

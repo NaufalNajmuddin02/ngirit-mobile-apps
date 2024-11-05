@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:ngirit/app/modules/cashflow/views/cashflow_view.dart';
 import '../controllers/bataspengeluaran_controller.dart';
 
 class BataspengeluaranView extends GetView<BataspengeluaranController> {
@@ -54,7 +56,7 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
               ),
             ),
           ),
-// Plus button (overflow menu) positioned at the top-right corner
+          // Plus button (overflow menu) positioned at the top-right corner
           Positioned(
             top: 30,
             right: 12,
@@ -266,10 +268,6 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                       backgroundColor =
                           Colors.green; // Warna hijau untuk Pendapatan
                       break;
-                    // case 2:
-                    //   backgroundColor =
-                    //       Colors.blue; // Warna biru untuk Transfer
-                    //   break;
                     default:
                       backgroundColor = Colors.red;
                   }
@@ -286,7 +284,6 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                           children: [
                             _buildTabItem('Pengeluaran', Colors.red, 0),
                             _buildTabItem('Pendapatan', Colors.green, 1),
-                            // _buildTabItem('Transfer', Colors.blue, 2),
                           ],
                         ),
                         // Input angka "0,00" di dalam background color
@@ -297,8 +294,10 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                               Spacer(), // Menggeser input ke kanan
                               Expanded(
                                 child: TextField(
-                                  controller:
-                                      nominalController, // Menggunakan controller
+                                  controller: controller.selectedTab.value == 0
+                                      ? controller.pengeluaranController
+                                      : controller
+                                          .pendapatanController, // Controller per tab
                                   keyboardType: TextInputType.number,
                                   textAlign:
                                       TextAlign.right, // Teks sejajar kanan
@@ -315,8 +314,12 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter
+                                        .digitsOnly, // Hanya menerima angka
+                                    NumberInputFormatter(), // Formatter angka dengan pemisah ribuan
+                                  ],
                                 ),
-// Hilangkan koma yang tidak perlu di sini
                               ),
                             ],
                           ),
@@ -349,8 +352,6 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                               return _buildPengeluaranForm(context);
                             case 1:
                               return _buildPendapatanForm(context);
-                            // case 2:
-                            //   return _buildTransferForm();
                             default:
                               return _buildPengeluaranForm(context);
                           }
@@ -361,12 +362,20 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                           alignment: Alignment.bottomCenter,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Ambil nilai nominal dari nominalController sebagai String
-                              String nominal = nominalController.text;
+                              // Ambil nilai nominal dari controller yang sesuai
+                              String nominal = controller.selectedTab.value == 0
+                                  ? controller.pengeluaranController.text
+                                  : controller.pendapatanController.text;
 
                               // Panggil fungsi untuk menyimpan data ke Firebase
-                              controller.saveFormData(
-                                  nominal); // Panggil saveFormData() dari controller
+                              controller.saveFormData(nominal);
+
+                              // Kosongkan form setelah data disimpan
+                              controller
+                                  .clearForm(controller.selectedTab.value);
+
+                              // Tutup BottomSheet setelah menyimpan
+                              Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(
@@ -377,7 +386,7 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                               backgroundColor: Colors.blue, // Warna tombol
                             ),
                             child: Text(
-                              'Save',
+                              'Simpan',
                               style:
                                   TextStyle(fontSize: 18, color: Colors.white),
                             ),
@@ -395,15 +404,28 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
     );
   }
 
-// Fungsi untuk membuat text field di dalam bottom sheet
-// Fungsi untuk membuat TabItem di dalam bottom sheet
+  // Fungsi untuk membuat TabItem di dalam bottom sheet
   Widget _buildTabItem(String title, Color color, int index) {
     return Expanded(
       child: Obx(() {
         bool isSelected = controller.selectedTab.value == index;
         return GestureDetector(
           onTap: () {
+            // Jika tab saat ini berbeda dari tab yang diklik, reset semua data form
+            if (controller.selectedTab.value != index) {
+              controller.resetFormData();
+            }
+
+            // Set selected tab dan kosongkan controller sesuai tab yang dipilih
             controller.selectedTab.value = index;
+
+            if (index == 0) {
+              controller.pengeluaranController
+                  .clear(); // Bersihkan semua field di tab Pengeluaran
+            } else if (index == 1) {
+              controller.pendapatanController
+                  .clear(); // Bersihkan semua field di tab Pendapatan
+            }
           },
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -419,7 +441,7 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                   child: Text(
                     title,
                     style: TextStyle(
-                      color: Colors.white, // Selalu putih untuk teks
+                      color: Colors.white, // Teks selalu putih
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -876,10 +898,10 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
-      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
-      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/makanan.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/cars.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop2.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/hiburan.png'},
       {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
       {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
       {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},
@@ -1066,10 +1088,10 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
   }
 
   final List<Map<String, String>> categories = [
-    {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
-    {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
-    {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
-    {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+    {'labels': 'Makan', 'icon': 'assets/icons/makanan.png'},
+    {'labels': 'Transportasi', 'icon': 'assets/icons/cars.png'},
+    {'labels': 'Belanja', 'icon': 'assets/icons/shop2.png'},
+    {'labels': 'Hiburan', 'icon': 'assets/icons/hiburan.png'},
     {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
     {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
     {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},
@@ -1109,8 +1131,7 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                     onTap: existingCategories.contains(label)
                         ? null
                         : () {
-                            Navigator.pop(
-                                context); // Close the category selection sheet
+                            Navigator.pop(context);
                             _showValueLimitModal(context, label);
                           },
                   );
@@ -1124,11 +1145,11 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
   // Month Container with Month on top and Year below
   Widget buildMonthContainer(String monthYear, [bool isCurrent = false]) {
     final parts = monthYear.split(" ");
-    final month = parts[0]; // Month name
-    final year = parts[1]; // Year
+    final month = parts[0];
+    final year = parts[1];
 
     return Container(
-      width: 90, // Reduced fixed width to prevent overflow
+      width: 90,
       padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
       decoration: BoxDecoration(
         color: isCurrent ? Color(0xFF1E2147) : Colors.transparent,
@@ -1157,7 +1178,7 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 2), // Space between month and year
+          SizedBox(height: 2),
           Text(
             year,
             style: TextStyle(
@@ -1172,7 +1193,14 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
     );
   }
 
-  // Transaction Group by Date
+  // Create a NumberFormat for Rupiah
+  final NumberFormat rupiahFormat = NumberFormat.currency(
+    locale: 'id', // Indonesian locale
+    symbol: 'Rp ', // Currency symbol for Rupiah
+    decimalDigits: 0, // No decimal places
+  );
+
+// Transaction Group by Date
   Widget buildTransactionItem(
     String date,
     String amount,
@@ -1206,6 +1234,16 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
             double target = futureSnapshot.data ?? 0.0;
             double progress = amountValue / (target > 0 ? target : 1);
 
+            // Find the appropriate icon based on the category
+            String iconPath = 'assets/icons/default.png'; // Default icon
+            for (var cat in categories) {
+              if (cat['labels'] == category) {
+                iconPath = cat['icon']!;
+                break;
+              }
+            }
+            double iconSize = 48; // Icon size
+
             return Container(
               margin: EdgeInsets.symmetric(vertical: 4),
               padding: EdgeInsets.all(12),
@@ -1225,10 +1263,11 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        radius: 24,
-                        child: Icon(Icons.shopping_cart, color: Colors.white),
+                      // Replace CircleAvatar with Image
+                      Image.asset(
+                        iconPath,
+                        width: iconSize,
+                        height: iconSize,
                       ),
                       SizedBox(width: 16),
                       Expanded(
@@ -1269,14 +1308,11 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                           SizedBox(height: 4),
                           Row(
                             children: [
-                              Text("Rp ",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                              Text(amountValue.toStringAsFixed(0),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
+                              Text(
+                                rupiahFormat.format(amountValue),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
                             ],
                           ),
                         ],
@@ -1288,9 +1324,11 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
                               style:
                                   TextStyle(color: Colors.grey, fontSize: 12)),
                           SizedBox(height: 4),
-                          Text("Rp ${target.toStringAsFixed(0)}",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(
+                            rupiahFormat.format(target),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
                         ],
                       ),
                       Container(
@@ -1324,55 +1362,80 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
     double amountValue,
     double target,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final _formKey = GlobalKey<FormState>();
-        final _amountController =
-            TextEditingController(text: amountValue.toStringAsFixed(0));
+    final _formKey = GlobalKey<FormState>();
+    final _amountController = TextEditingController();
+    final NumberFormat currencyFormatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
-        return AlertDialog(
-          title: Text('Edit Transaction'),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Amount'),
-                  controller: _amountController,
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter an amount';
-                    }
-                    return null;
-                  },
-                ),
-              ],
+    controller.getBatasPengeluaran(category).then((limitAmount) {
+      _amountController.text = limitAmount.toStringAsFixed(0);
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Edit Batas Pengeluaran'),
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Jumlah (Rp)'),
+                    controller: _amountController,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Silakan masukkan jumlah';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      // Menghapus semua karakter non-digit untuk menghitung jumlah
+                      String numericValue =
+                          value.replaceAll(RegExp(r'[^0-9]'), '');
+
+                      // Mengonversi string numerik ke double dan memformatnya
+                      if (numericValue.isNotEmpty) {
+                        double jumlah = double.tryParse(numericValue) ?? 0.0;
+
+                        // Memperbarui TextField dengan format mata uang
+                        _amountController.value = TextEditingValue(
+                          text: currencyFormatter.format(jumlah),
+                          selection: TextSelection.collapsed(
+                              offset: currencyFormatter.format(jumlah).length),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: Text('Save'),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // Update the transaction item with the new amount
-                  controller.updateTransactionItem(
-                      category, double.parse(_amountController.text));
+            actions: [
+              TextButton(
+                child: Text('Batal'),
+                onPressed: () {
                   Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+                },
+              ),
+              ElevatedButton(
+                child: Text('Simpan'),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // Menghapus simbol dan format sebelum parsing
+                    String rawValue = _amountController.text
+                        .replaceAll(RegExp(r'[^0-9]'), '');
+                    double amount = double.tryParse(rawValue) ?? 0.0;
+
+                    controller.updateTransactionItem(category, amount);
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    });
   }
 
 // Widget untuk membangun grup transaksi berdasarkan tanggal
@@ -1411,31 +1474,83 @@ class BataspengeluaranView extends GetView<BataspengeluaranController> {
     );
   }
 
-  // Function to show the value limit modal with input field
   void _showValueLimitModal(BuildContext context, String kategori) {
     TextEditingController jumlahController = TextEditingController();
+    final NumberFormat currencyFormatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Masukkan Batas Pengeluaran untuk $kategori'),
-          content: TextField(
-            controller: jumlahController,
-            decoration: InputDecoration(labelText: 'Jumlah'),
-            keyboardType: TextInputType.number,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0), // Rounded corners
+          ),
+          title: Text(
+            'Masukkan Batas Pengeluaran untuk $kategori',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Container(
+            padding: EdgeInsets.all(16.0),
+            child: TextField(
+              controller: jumlahController,
+              decoration: InputDecoration(
+                labelText: 'Jumlah (Rp)',
+                labelStyle: TextStyle(color: Colors.blueGrey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0), // Rounded border
+                  borderSide: BorderSide(color: Colors.blueGrey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                  borderSide: BorderSide(color: Colors.blueGrey),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                // Remove non-digit characters
+                String numericValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+
+                // Convert to double and format
+                if (numericValue.isNotEmpty) {
+                  double jumlah = double.tryParse(numericValue) ?? 0.0;
+
+                  // Update TextField with currency format
+                  jumlahController.value = TextEditingValue(
+                    text: currencyFormatter.format(jumlah),
+                    selection: TextSelection.collapsed(
+                        offset: currencyFormatter.format(jumlah).length),
+                  );
+                }
+              },
+            ),
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red, // Button text color
+              ),
               child: Text('Batal'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue, // Button text color
+              ),
               child: Text('Simpan'),
               onPressed: () {
-                double jumlah = double.tryParse(jumlahController.text) ?? 0.0;
+                // Remove symbols before parsing
+                String rawValue =
+                    jumlahController.text.replaceAll(RegExp(r'[^0-9]'), '');
+                double jumlah = double.tryParse(rawValue) ?? 0.0;
+
+                // Add spending limit
                 controller.addBatasPengeluaran(kategori, jumlah);
                 Navigator.of(context).pop();
               },

@@ -4,6 +4,36 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/dashboard_controller.dart';
 
+import 'package:flutter/services.dart';
+
+class NumberInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat.decimalPattern('en');
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    // Jika input kosong, tidak perlu diformat
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Hapus semua pemisah lama agar hanya tersisa angka
+    final intSelectionIndex = newValue.selection.baseOffset;
+    final String pureNumber = newValue.text.replaceAll(',', '');
+
+    // Format angka dengan pemisah ribuan
+    final newText = _formatter.format(int.parse(pureNumber));
+
+    // Kembalikan nilai baru dengan posisi kursor yang benar
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: intSelectionIndex + (newText.length - pureNumber.length),
+      ),
+    );
+  }
+}
+
 class DashboardView extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
   final TextEditingController nominalController = TextEditingController();
@@ -69,8 +99,8 @@ class DashboardView extends StatelessWidget {
                       IconButton(
                         icon: Icon(Icons.logout, color: Colors.white),
                         onPressed: () {
-                          Get.offAllNamed(
-                              '/login'); // Redirect to login page after logout
+                          controller
+                              .logout(); // Panggil fungsi logout dari controller
                         },
                       ),
                     ],
@@ -90,12 +120,13 @@ class DashboardView extends StatelessWidget {
                       // Kolom Saldo dengan Gradien
                       Container(
                         margin: EdgeInsets.all(16),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 16, horizontal: 10),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
                               Color(0xFF35478C),
-                              Color(
-                                  0xFFFFFFFF), // Menggunakan warna putih di akhir
+                              Color(0xFFB0C4DE), // Warna gradasi lebih terang
                             ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -108,65 +139,69 @@ class DashboardView extends StatelessWidget {
                               title: Text(
                                 'Saldo Anda',
                                 style: TextStyle(
-                                  color: Colors.grey,
+                                  color: Colors.white,
                                   fontFamily: 'OpenSans',
                                 ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Obx(() {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      controller.isSaldoVisible.value
+                                          ? '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.saldo.value)}'
+                                          : '******',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: "OpenSans",
+                                      ),
+                                    ),
+                                  );
+                                }),
                               ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Obx(() {
                                     return IconButton(
-                                      icon: Icon(controller.isSaldoVisible.value
-                                          ? Icons.visibility
-                                          : Icons.visibility_off),
+                                      icon: Icon(
+                                        controller.isSaldoVisible.value
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        color: Colors.white,
+                                      ),
                                       onPressed:
                                           controller.toggleSaldoVisibility,
                                     );
                                   }),
                                   IconButton(
-                                    icon: Icon(Icons.refresh),
-                                    onPressed: controller
-                                        .listenToAccountUpdates, // Tombol refresh
+                                    icon: Icon(Icons.refresh,
+                                        color: Colors.white),
+                                    onPressed:
+                                        controller.listenToAccountUpdates,
                                   ),
                                 ],
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Obx(() {
-                                return Text(
-                                  controller.isSaldoVisible.value
-                                      ? '${NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0).format(controller.saldo.value)}'
-                                      : '******',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: "OpenSans",
-                                  ),
-                                );
-                              }),
-                            ),
-                            Divider(),
+                            Divider(color: Colors.white54),
                             Obx(() {
                               return Column(
                                 children: controller.accounts.map((account) {
                                   String accountName =
                                       account['nama_akun']?.toString() ??
-                                          'Unknown'; // Nama akun
+                                          'Unknown';
                                   String amountString =
-                                      account['saldo_akhir']?.toString() ??
-                                          '0'; // Saldo akun
+                                      account['saldo_akhir']?.toString() ?? '0';
                                   Color amountColor;
 
-                                  // Memastikan saldo ditampilkan dengan benar dan warna sesuai
                                   try {
                                     int amount = int.parse(amountString);
                                     amountColor =
                                         amount >= 0 ? Colors.blue : Colors.red;
 
-                                    // Memformat saldo dengan NumberFormat
                                     amountString = NumberFormat.currency(
                                       locale: 'id',
                                       symbol: 'Rp',
@@ -178,15 +213,99 @@ class DashboardView extends StatelessWidget {
                                   }
 
                                   String iconUrl =
-                                      account['icon']?.toString() ??
-                                          ''; // URL ikon
+                                      account['icon']?.toString() ?? '';
+                                  bool isLocalAsset =
+                                      iconUrl.startsWith("assets/");
 
-                                  // Membuat tile untuk setiap akun
-                                  return _buildAccountTile(
-                                    accountName,
-                                    amountString,
-                                    amountColor,
-                                    iconUrl,
+                                  return Container(
+                                    margin: EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 16),
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white, // Background putih
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.3),
+                                          spreadRadius: 2,
+                                          blurRadius: 5,
+                                          offset:
+                                              Offset(0, 3), // shadow position
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // Kiri: Ikon dan Nama Akun
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 20,
+                                              child: isLocalAsset
+                                                  ? Image.asset(
+                                                      iconUrl, // Gunakan Image.asset untuk ikon lokal
+                                                      width: 40,
+                                                      height: 40,
+                                                      errorBuilder: (context,
+                                                          error, stackTrace) {
+                                                        // Jika ada error, tampilkan ikon default
+                                                        return Image.asset(
+                                                          'assets/icons/default_icon.png',
+                                                          width: 40,
+                                                          height: 40,
+                                                        );
+                                                      },
+                                                    )
+                                                  : Image.network(
+                                                      iconUrl, // Gunakan Image.network jika bukan lokal
+                                                      width: 40,
+                                                      height: 40,
+                                                      errorBuilder: (context,
+                                                          error, stackTrace) {
+                                                        // Jika URL tidak valid, tampilkan ikon default
+                                                        return Image.asset(
+                                                          'assets/icons/default_icon.png',
+                                                          width: 40,
+                                                          height: 40,
+                                                        );
+                                                      },
+                                                    ),
+                                            ),
+                                            SizedBox(width: 10),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  accountName,
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontFamily: 'OpenSans',
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        // Kanan: Amount
+                                        Obx(() {
+                                          return Text(
+                                            controller.isSaldoVisible.value
+                                                ? amountString
+                                                : '******',
+                                            style: TextStyle(
+                                              color: amountColor,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'OpenSans',
+                                            ),
+                                          );
+                                        }),
+                                      ],
+                                    ),
                                   );
                                 }).toList(),
                               );
@@ -299,10 +418,6 @@ class DashboardView extends StatelessWidget {
                       backgroundColor =
                           Colors.green; // Warna hijau untuk Pendapatan
                       break;
-                    // case 2:
-                    //   backgroundColor =
-                    //       Colors.blue; // Warna biru untuk Transfer
-                    //   break;
                     default:
                       backgroundColor = Colors.red;
                   }
@@ -319,7 +434,6 @@ class DashboardView extends StatelessWidget {
                           children: [
                             _buildTabItem('Pengeluaran', Colors.red, 0),
                             _buildTabItem('Pendapatan', Colors.green, 1),
-                            // _buildTabItem('Transfer', Colors.blue, 2),
                           ],
                         ),
                         // Input angka "0,00" di dalam background color
@@ -330,8 +444,10 @@ class DashboardView extends StatelessWidget {
                               Spacer(), // Menggeser input ke kanan
                               Expanded(
                                 child: TextField(
-                                  controller:
-                                      nominalController, // Menggunakan controller
+                                  controller: controller.selectedTab.value == 0
+                                      ? controller.pengeluaranController
+                                      : controller
+                                          .pendapatanController, // Controller per tab
                                   keyboardType: TextInputType.number,
                                   textAlign:
                                       TextAlign.right, // Teks sejajar kanan
@@ -348,8 +464,12 @@ class DashboardView extends StatelessWidget {
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter
+                                        .digitsOnly, // Hanya menerima angka
+                                    NumberInputFormatter(), // Formatter angka dengan pemisah ribuan
+                                  ],
                                 ),
-// Hilangkan koma yang tidak perlu di sini
                               ),
                             ],
                           ),
@@ -382,8 +502,6 @@ class DashboardView extends StatelessWidget {
                               return _buildPengeluaranForm(context);
                             case 1:
                               return _buildPendapatanForm(context);
-                            // case 2:
-                            //   return _buildTransferForm();
                             default:
                               return _buildPengeluaranForm(context);
                           }
@@ -394,12 +512,20 @@ class DashboardView extends StatelessWidget {
                           alignment: Alignment.bottomCenter,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Ambil nilai nominal dari nominalController sebagai String
-                              String nominal = nominalController.text;
+                              // Ambil nilai nominal dari controller yang sesuai
+                              String nominal = controller.selectedTab.value == 0
+                                  ? controller.pengeluaranController.text
+                                  : controller.pendapatanController.text;
 
                               // Panggil fungsi untuk menyimpan data ke Firebase
-                              controller.saveFormData(
-                                  nominal); // Panggil saveFormData() dari controller
+                              controller.saveFormData(nominal);
+
+                              // Kosongkan form setelah data disimpan
+                              // controller
+                              //     .clearForm(controller.selectedTab.value);
+
+                              // Tutup BottomSheet setelah menyimpan
+                              Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(
@@ -410,7 +536,7 @@ class DashboardView extends StatelessWidget {
                               backgroundColor: Colors.blue, // Warna tombol
                             ),
                             child: Text(
-                              'Save',
+                              'Simpan',
                               style:
                                   TextStyle(fontSize: 18, color: Colors.white),
                             ),
@@ -779,6 +905,18 @@ class DashboardView extends StatelessWidget {
       ],
     );
   }
+
+  // Widget _buildTransferForm() {
+  //   return Column(
+  //     children: [
+  //       _buildTextField('Deskripsi', Icons.edit),
+  //       _buildTextField('Kategori', Icons.list),
+  //       _buildTextField('Dibayar dengan', Icons.wallet_giftcard),
+  //       _buildTextField('Tanggal', Icons.calendar_today),
+  //     ],
+  //   );
+  // }
+
 // Fungsi untuk membuat text field di dalam bottom sheet
 
   Widget _buildTextField(String label, IconData icon) {
@@ -909,10 +1047,10 @@ class DashboardView extends StatelessWidget {
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
-      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
-      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/makanan.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/cars.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop2.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/hiburan.png'},
       {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
       {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
       {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},

@@ -3,6 +3,35 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controllers/cashflow_controller.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
+
+class NumberInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat.decimalPattern('en');
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    // Jika input kosong, tidak perlu diformat
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Hapus semua pemisah lama agar hanya tersisa angka
+    final intSelectionIndex = newValue.selection.baseOffset;
+    final String pureNumber = newValue.text.replaceAll(',', '');
+
+    // Format angka dengan pemisah ribuan
+    final newText = _formatter.format(int.parse(pureNumber));
+
+    // Kembalikan nilai baru dengan posisi kursor yang benar
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: intSelectionIndex + (newText.length - pureNumber.length),
+      ),
+    );
+  }
+}
 
 class CashflowView extends StatelessWidget {
   final CashflowController controller = Get.put(CashflowController());
@@ -45,7 +74,7 @@ class CashflowView extends StatelessWidget {
             right: 0,
             child: Center(
               child: Text(
-                'Arus',
+                'Arus Kas',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -348,201 +377,234 @@ class CashflowView extends StatelessWidget {
                 ),
               )),
 
-// Main content with Padding
+          // Main content with Padding
           Padding(
             padding: const EdgeInsets.only(top: 160.0), // Adjusted top padding
             child: Column(
               children: [
                 Expanded(
                   child: Obx(
-                    () => ListView(
-                      children: [
-                        controller.filteredExpenses.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Belum ada data di bulan ini',
-                                  style: TextStyle(fontSize: 16),
+                    () {
+                      // Mengelompokkan data berdasarkan tanggal
+                      final allGroupedData =
+                          <String, List<Map<String, dynamic>>>{};
+
+                      // Cek dan tambahkan data terbaru ke dalam filteredExpenses dan filteredIncome
+                      if (controller.filteredExpenses.isNotEmpty) {
+                        for (var expense in controller.filteredExpenses) {
+                          final date = expense['tanggal'];
+                          allGroupedData.putIfAbsent(date, () => []).add({
+                            ...expense,
+                            'type': 'expense',
+                          });
+                        }
+                      }
+
+                      if (controller.filteredIncome.isNotEmpty) {
+                        for (var income in controller.filteredIncome) {
+                          final date = income['tanggal'];
+                          allGroupedData.putIfAbsent(date, () => []).add({
+                            ...income,
+                            'type': 'income',
+                          });
+                        }
+                      }
+
+                      // Jika allGroupedData kosong, tampilkan pesan "Data belum ada di bulan ini"
+                      if (allGroupedData.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Data belum ada di bulan ini',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      }
+
+                      // Tambahkan SingleChildScrollView dan Column untuk membuat tampilan bisa di-scroll
+                      return SingleChildScrollView(
+                        child: Card(
+                          margin:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Riwayat Keuangan',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )
-                            : ListView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: controller.filteredExpenses.length,
-                                itemBuilder: (context, index) {
-                                  final expense = controller.filteredExpenses
-                                      .reversed // Mengurutkan data terbaru di atas
-                                      .toList()[index];
+                                SizedBox(height: 8.0),
+                                // Tampilkan semua data (pengeluaran dan pemasukan) berdasarkan tanggal
+                                ...allGroupedData.keys.map((date) {
+                                  final transactions =
+                                      allGroupedData[date] ?? [];
 
-                                  // Menentukan ikon berdasarkan kategori
-                                  String assetPath;
-
-                                  switch (expense['kategori']) {
-                                    case 'Makan':
-                                      assetPath = 'assets/icons/makanan.png';
-                                      break;
-                                    case 'Transportasi':
-                                      assetPath = 'assets/icons/cars.png';
-                                      break;
-                                    case 'Hiburan':
-                                      assetPath = 'assets/icons/hiburan.png';
-                                      break;
-                                    case 'Belanja':
-                                      assetPath = 'assets/icons/belanja.png';
-                                      break;
-                                    case 'Pendidikan':
-                                      assetPath = 'assets/icons/pendidikan.png';
-                                      break;
-                                    case 'Kesehatan':
-                                      assetPath = 'assets/icons/kesehatan.png';
-                                      break;
-                                    case 'Liburan':
-                                      assetPath = 'assets/icons/liburan.png';
-                                      break;
-                                    case 'Perbaikan Rumah':
-                                      assetPath = 'assets/icons/rumah.png';
-                                      break;
-                                    case 'Pakaian':
-                                      assetPath = 'assets/icons/outfit.png';
-                                      break;
-                                    case 'Internet':
-                                      assetPath = 'assets/icons/internet.png';
-                                      break;
-                                    case 'Olahraga & Gym':
-                                      assetPath = 'assets/icons/gym.png';
-                                    case 'Asuransi':
-                                      assetPath = 'assets/icons/kesehatan.png';
-                                      break;
-                                    case 'Lainnya':
-                                      assetPath = 'assets/icons/lainnya.png';
-                                      break;
-                                    default:
-                                      assetPath =
-                                          'assets/icons/icons8-no-96.png';
-                                  }
-
-                                  return Card(
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    elevation: 4,
-                                    child: ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor: Colors.transparent,
-                                        child: Image.asset(
-                                          assetPath,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        NumberFormat.currency(
-                                          locale: 'id',
-                                          symbol: 'Rp ',
-                                          decimalDigits: 0,
-                                        ).format(expense['nominal'] ?? 0),
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Tanggal: $date',
                                         style: TextStyle(
-                                          color: Colors.red,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                              'Deskripsi: ${expense['deskripsi']}'),
-                                          Text(
-                                              'Kategori: ${expense['kategori']}'),
-                                          Text('Akun: ${expense['akun']}'),
-                                          Text(
-                                              'Tanggal: ${expense['tanggal']}'),
-                                        ],
-                                      ),
-                                    ),
+                                      SizedBox(height: 4.0),
+                                      ...transactions.map((transaction) {
+                                        String assetPath;
+                                        bool isExpense =
+                                            transaction['type'] == 'expense';
+
+                                        switch (transaction['kategori']) {
+                                          case 'Makan':
+                                            assetPath =
+                                                'assets/icons/makanan.png';
+                                            break;
+                                          case 'Transportasi':
+                                            assetPath = 'assets/icons/cars.png';
+                                            break;
+                                          case 'Hiburan':
+                                            assetPath =
+                                                'assets/icons/hiburan.png';
+                                            break;
+                                          case 'Gaji':
+                                            assetPath = 'assets/icons/gaji.png';
+                                            break;
+                                          case 'Investasi':
+                                            assetPath =
+                                                'assets/icons/investasi.png';
+                                            break;
+                                          case 'Belanja':
+                                            assetPath =
+                                                'assets/icons/shop2.png';
+                                            break;
+                                          case 'Pendidikan':
+                                            assetPath =
+                                                'assets/icons/pendidikan.png';
+                                            break;
+                                          case 'Kesehatan':
+                                            assetPath =
+                                                'assets/icons/kesehatan.png';
+                                            break;
+                                          case 'Rumah Tangga':
+                                            assetPath = 'assets/icons/rt.png';
+                                            break;
+                                          case 'Liburan':
+                                            assetPath =
+                                                'assets/icons/liburan.png';
+                                            break;
+                                          case 'Perbaikan Rumah':
+                                            assetPath =
+                                                'assets/icons/rumah.png';
+                                            break;
+                                          case 'Internet':
+                                            assetPath =
+                                                'assets/icons/internet.png';
+                                            break;
+                                          case 'Olahraga & Gym':
+                                            assetPath = 'assets/icons/gym.png';
+                                            break;
+                                          case 'Lainnya':
+                                            assetPath =
+                                                'assets/icons/lainnya.png';
+                                            break;
+                                          case 'Pakaian':
+                                            assetPath =
+                                                'assets/icons/outfit.png';
+                                            break;
+                                          case 'Bonus':
+                                            assetPath =
+                                                'assets/icons/hadiah.png';
+                                            break;
+                                          case 'Uang Saku':
+                                            assetPath =
+                                                'assets/icons/uangsaku.png';
+                                            break;
+                                          default:
+                                            assetPath =
+                                                'assets/icons/icons8-no-96.png';
+                                        }
+
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4.0),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment
+                                                .center, // Aligns children vertically in the center
+                                            children: [
+                                              CircleAvatar(
+                                                backgroundColor:
+                                                    Colors.transparent,
+                                                child: Image.asset(assetPath,
+                                                    fit: BoxFit.cover),
+                                              ),
+                                              SizedBox(width: 8.0),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '${transaction['deskripsi']}',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center, // Center align the items vertically
+                                                      children: [
+                                                        Text(
+                                                            '${transaction['kategori']}'),
+                                                        Text(
+                                                          NumberFormat.currency(
+                                                            locale: 'id',
+                                                            symbol: 'Rp ',
+                                                            decimalDigits: 0,
+                                                          ).format(transaction[
+                                                                  'nominal'] ??
+                                                              0),
+                                                          style: TextStyle(
+                                                            color: isExpense
+                                                                ? Colors.red
+                                                                : Colors.green,
+                                                            fontSize:
+                                                                18.0, // Size of the font
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                      Divider(), // Garis pemisah antar tanggal
+                                    ],
                                   );
-                                },
-                              ),
-                        controller.filteredIncome.isEmpty
-                            ? Padding(padding: const EdgeInsets.all(16.0))
-                            : ListView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount: controller.filteredIncome.length,
-                                itemBuilder: (context, index) {
-                                  final income = controller.filteredIncome
-                                      .reversed // Mengurutkan data terbaru di atas
-                                      .toList()[index];
-
-                                  // Menentukan ikon berdasarkan kategori
-                                  String assetPath;
-
-                                  switch (income['kategori']) {
-                                    case 'Gaji':
-                                      assetPath = 'assets/icons/gaji.png';
-                                      break;
-                                    case 'Investasi':
-                                      assetPath = 'assets/icons/investasi.png';
-                                      break;
-                                    case 'Bonus':
-                                      assetPath = 'assets/icons/bonus.png';
-                                      break;
-                                    case 'Uang Saku':
-                                      assetPath = 'assets/icons/uangsaku.png';
-                                      break;
-                                    case 'Lainnya':
-                                      assetPath = 'assets/icons/lainnya.png';
-                                      break;
-                                    default:
-                                      assetPath =
-                                          'assets/icons/icons8-no-96.png';
-                                  }
-
-                                  return Card(
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    elevation: 4,
-                                    child: ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor: Colors.transparent,
-                                        child: Image.asset(
-                                          assetPath,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        NumberFormat.currency(
-                                          locale: 'id',
-                                          symbol: 'Rp ',
-                                          decimalDigits: 0,
-                                        ).format(income['nominal'] ?? 0),
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                              'Deskripsi: ${income['deskripsi']}'),
-                                          Text(
-                                              'Kategori: ${income['kategori']}'),
-                                          Text('Akun: ${income['akun']}'),
-                                          Text('Tanggal: ${income['tanggal']}'),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                      ],
-                    ),
+                                }).toList(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 // Fixed Total Income and Expenses Section
@@ -589,7 +651,7 @@ class CashflowView extends StatelessWidget {
                                           const Color.fromARGB(255, 0, 0, 0))),
                             ],
                           ),
-// Kolom untuk Total Pemasukan
+                          // Kolom untuk Total Pemasukan
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -614,7 +676,7 @@ class CashflowView extends StatelessWidget {
                                           255, 37, 37, 37))),
                             ],
                           ),
-// Kolom untuk Saldo
+                          // Kolom untuk Saldo
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -749,213 +811,232 @@ class CashflowView extends StatelessWidget {
     );
   }
 
-  void _showModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
-      ),
-      builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.9, // Mengatur tinggi BottomSheet
-          widthFactor: 0.9, // Mengatur lebar BottomSheet
-          child: Stack(
-            children: [
-              // Bagian atas dengan warna sesuai tab yang diklik
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 160, // Tinggi background termasuk tab
-                child: Obx(() {
-                  Color backgroundColor;
-                  switch (controller.selectedTab.value) {
-                    case 0:
-                      backgroundColor =
-                          Colors.red; // Warna merah untuk Pengeluaran
-                      break;
-                    case 1:
-                      backgroundColor =
-                          Colors.green; // Warna hijau untuk Pendapatan
-                      break;
-                    // case 2:
-                    //   backgroundColor =
-                    //       Colors.blue; // Warna biru untuk Transfer
-                    //   break;
-                    default:
-                      backgroundColor = Colors.red;
-                  }
-                  return Container(
+    void _showModalBottomSheet(BuildContext context) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+        ),
+        builder: (BuildContext context) {
+          return FractionallySizedBox(
+            heightFactor: 0.9, // Mengatur tinggi BottomSheet
+            widthFactor: 0.9, // Mengatur lebar BottomSheet
+            child: Stack(
+              children: [
+                // Bagian atas dengan warna sesuai tab yang diklik
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 160, // Tinggi background termasuk tab
+                  child: Obx(() {
+                    Color backgroundColor;
+                    switch (controller.selectedTab.value) {
+                      case 0:
+                        backgroundColor =
+                            Colors.red; // Warna merah untuk Pengeluaran
+                        break;
+                      case 1:
+                        backgroundColor =
+                            Colors.green; // Warna hijau untuk Pendapatan
+                        break;
+                      default:
+                        backgroundColor = Colors.red;
+                    }
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: backgroundColor,
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(20.0)),
+                      ),
+                      child: Column(
+                        children: [
+                          // Tab items di bagian atas
+                          Row(
+                            children: [
+                              _buildTabItem('Pengeluaran', Colors.red, 0),
+                              _buildTabItem('Pendapatan', Colors.green, 1),
+                            ],
+                          ),
+                          // Input angka "0,00" di dalam background color
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Spacer(), // Menggeser input ke kanan
+                                Expanded(
+                                  child: TextField(
+                                    controller: controller.selectedTab.value == 0
+                                        ? controller.pengeluaranController
+                                        : controller
+                                            .pendapatanController, // Controller per tab
+                                    keyboardType: TextInputType.number,
+                                    textAlign:
+                                        TextAlign.right, // Teks sejajar kanan
+                                    decoration: InputDecoration(
+                                      hintText: '0,00',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 40,
+                                      ),
+                                      border: InputBorder.none,
+                                    ),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter
+                                          .digitsOnly, // Hanya menerima angka
+                                      NumberInputFormatter(), // Formatter angka dengan pemisah ribuan
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                // Konten BottomSheet
+                Positioned.fill(
+                  top:
+                      160, // Konten dimulai setelah header background dan input angka
+                  child: Container(
+                    padding: EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: backgroundColor,
+                      color: Colors.white, // Warna latar belakang form
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(20.0)),
                     ),
-                    child: Column(
-                      children: [
-                        // Tab items di bagian atas
-                        Row(
-                          children: [
-                            _buildTabItem('Pengeluaran', Colors.red, 0),
-                            _buildTabItem('Pendapatan', Colors.green, 1),
-                            // _buildTabItem('Transfer', Colors.blue, 2),
-                          ],
-                        ),
-                        // Input angka "0,00" di dalam background color
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Spacer(), // Menggeser input ke kanan
-                              Expanded(
-                                child: TextField(
-                                  controller:
-                                      nominalController, // Menggunakan controller
-                                  keyboardType: TextInputType.number,
-                                  textAlign:
-                                      TextAlign.right, // Teks sejajar kanan
-                                  decoration: InputDecoration(
-                                    hintText: '0,00',
-                                    hintStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 40,
-                                    ),
-                                    border: InputBorder.none,
-                                  ),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 20),
+                          // Form Input berdasarkan tab yang dipilih
+                          Obx(() {
+                            switch (controller.selectedTab.value) {
+                              case 0:
+                                return _buildPengeluaranForm(context);
+                              case 1:
+                                return _buildPendapatanForm(context);
+                              default:
+                                return _buildPengeluaranForm(context);
+                            }
+                          }),
+                          SizedBox(height: 20),
+                          // Tombol Save di bagian bawah BottomSheet
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Ambil nilai nominal dari controller yang sesuai
+                                String nominal = controller.selectedTab.value == 0
+                                    ? controller.pengeluaranController.text
+                                    : controller.pendapatanController.text;
+
+                                // Panggil fungsi untuk menyimpan data ke Firebase
+                                controller.saveFormData(nominal);
+
+                                // Kosongkan form setelah data disimpan
+                                controller
+                                    .clearForm(controller.selectedTab.value);
+
+                                // Tutup BottomSheet setelah menyimpan
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 50, vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
-// Hilangkan koma yang tidak perlu di sini
+                                backgroundColor: Colors.blue, // Warna tombol
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-              // Konten BottomSheet
-              Positioned.fill(
-                top:
-                    160, // Konten dimulai setelah header background dan input angka
-                child: Container(
-                  padding: EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white, // Warna latar belakang form
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20.0)),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 20),
-                        // Form Input berdasarkan tab yang dipilih
-                        Obx(() {
-                          switch (controller.selectedTab.value) {
-                            case 0:
-                              return _buildPengeluaranForm(context);
-                            case 1:
-                              return _buildPendapatanForm(context);
-                            // case 2:
-                            //   return _buildTransferForm();
-                            default:
-                              return _buildPengeluaranForm(context);
-                          }
-                        }),
-                        SizedBox(height: 20),
-                        // Tombol Save di bagian bawah BottomSheet
-                        // Tombol Save di bagian bawah BottomSheet
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Ambil nilai nominal dari nominalController sebagai String
-                              String nominal = nominalController.text;
-
-                              // Panggil fungsi untuk menyimpan data ke Firebase
-                              controller.saveFormData(
-                                  nominal); // Panggil saveFormData() dari controller
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 50, vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                              child: Text(
+                                'Simpan',
+                                style:
+                                    TextStyle(fontSize: 18, color: Colors.white),
                               ),
-                              backgroundColor: Colors.blue, // Warna tombol
-                            ),
-                            child: Text(
-                              'Save',
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.white),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+              ],
+            ),
+          );
+        },
+      );
+    }
 
-// Fungsi untuk membuat text field di dalam bottom sheet
-  // Fungsi untuk membuat TabItem di dalam bottom sheet
-  Widget _buildTabItem(String title, Color color, int index) {
-    return Expanded(
-      child: Obx(() {
-        bool isSelected = controller.selectedTab.value == index;
-        return GestureDetector(
-          onTap: () {
-            controller.selectedTab.value = index;
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color:
-                      isSelected ? color.withOpacity(0.8) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white, // Selalu putih untuk teks
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              // Garis putih di bawah teks untuk tab yang dipilih
-              if (isSelected)
+    // Fungsi untuk membuat TabItem di dalam bottom sheet
+    Widget _buildTabItem(String title, Color color, int index) {
+      return Expanded(
+        child: Obx(() {
+          bool isSelected = controller.selectedTab.value == index;
+          return GestureDetector(
+            onTap: () {
+              // Jika tab saat ini berbeda dari tab yang diklik, reset semua data form
+              if (controller.selectedTab.value != index) {
+                controller.resetFormData();
+              }
+
+              // Set selected tab dan kosongkan controller sesuai tab yang dipilih
+              controller.selectedTab.value = index;
+
+              if (index == 0) {
+                controller.pengeluaranController
+                    .clear(); // Bersihkan semua field di tab Pengeluaran
+              } else if (index == 1) {
+                controller.pendapatanController
+                    .clear(); // Bersihkan semua field di tab Pendapatan
+              }
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Container(
-                  height: 3, // Ketebalan garis
-                  width: 40, // Lebar garis
-                  margin: EdgeInsets.only(top: 5),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white, // Warna garis putih
-                    borderRadius: BorderRadius.circular(2),
+                    color:
+                        isSelected ? color.withOpacity(0.8) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: Colors.white, // Teks selalu putih
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
+                // Garis putih di bawah teks untuk tab yang dipilih
+                if (isSelected)
+                  Container(
+                    height: 3, // Ketebalan garis
+                    width: 40, // Lebar garis
+                    margin: EdgeInsets.only(top: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Warna garis putih
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
+      );
+    }
 
   Widget _buildPengeluaranForm(BuildContext context) {
     return Column(
@@ -963,10 +1044,8 @@ class CashflowView extends StatelessWidget {
           CrossAxisAlignment.start, // Supaya label di atas text field
 
       children: [
-        // TextField untuk Deskripsi
-
         Text(
-          'Deskripsi', // Label di atas input field
+          'Keterangan', // Label di atas input field
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         Padding(
@@ -981,7 +1060,7 @@ class CashflowView extends StatelessWidget {
                       value; // Ini adalah variabel observable, jadi perlu diperbarui di sini
                 },
                 decoration: InputDecoration(
-                  labelText: 'Masukkan Deskripsi', // Placeholder
+                  labelText: 'Masukkan Keterangan', // Placeholder
                   prefixIcon: Icon(Icons.edit), // Ikon di dalam field
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 10), // Padding agar rapi
@@ -1115,7 +1194,7 @@ class CashflowView extends StatelessWidget {
       children: [
         // TextField untuk Deskripsi Pendapatan
         Text(
-          'Deskripsi',
+          'Keterangan',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         Padding(
@@ -1128,7 +1207,7 @@ class CashflowView extends StatelessWidget {
                     value; // Simpan input deskripsi ke dalam controller
               },
               decoration: InputDecoration(
-                labelText: 'Masukkan Deskripsi', // Placeholder
+                labelText: 'Masukkan Keterangan', // Placeholder
                 prefixIcon: Icon(Icons.edit), // Ikon di dalam field
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 10), // Padding agar rapi
@@ -1172,8 +1251,6 @@ class CashflowView extends StatelessWidget {
             }),
           ),
         ),
-
-        // TextField untuk Masuk Saldo Ke
         Text(
           'Masuk Saldo Ke',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -1390,10 +1467,10 @@ class CashflowView extends StatelessWidget {
 
   void _showKategoriBottomSheet(BuildContext context) {
     final List<Map<String, dynamic>> kategoriList = [
-      {'labels': 'Makan', 'icon': 'assets/icons/food.png'},
-      {'labels': 'Transportasi', 'icon': 'assets/icons/car.png'},
-      {'labels': 'Belanja', 'icon': 'assets/icons/shop.png'},
-      {'labels': 'Hiburan', 'icon': 'assets/icons/cinema.png'},
+      {'labels': 'Makan', 'icon': 'assets/icons/makanan.png'},
+      {'labels': 'Transportasi', 'icon': 'assets/icons/cars.png'},
+      {'labels': 'Belanja', 'icon': 'assets/icons/shop2.png'},
+      {'labels': 'Hiburan', 'icon': 'assets/icons/hiburan.png'},
       {'labels': 'Pendidikan', 'icon': 'assets/icons/pendidikan.png'},
       {'labels': 'Rumah Tangga', 'icon': 'assets/icons/rt.png'},
       {'labels': 'Investasi', 'icon': 'assets/icons/investasi.png'},

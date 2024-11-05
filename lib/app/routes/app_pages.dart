@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-
 import '../../onboarding_screen/onboarding_screen.dart';
 import '../../splash_screen/splash_screen.dart';
 import '../modules/bataspengeluaran/bindings/bataspengeluaran_binding.dart';
@@ -30,7 +29,6 @@ import '../modules/tambahakun/bindings/tambahakun_binding.dart';
 import '../modules/tambahakun/views/tambahakun_view.dart';
 import '../modules/tambahcc/bindings/tambahcc_binding.dart';
 import '../modules/tambahcc/views/tambahcc_view.dart';
-
 part 'app_routes.dart';
 
 class AppPages {

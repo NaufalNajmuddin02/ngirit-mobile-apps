@@ -26,7 +26,8 @@ class StatisticController extends GetxController {
   var creditCards = <Map<String, dynamic>>[].obs;
   var accounts = <Map<String, dynamic>>[].obs;
   TextEditingController deskripsiController = TextEditingController();
-
+  TextEditingController pengeluaranController = TextEditingController();
+  TextEditingController pendapatanController = TextEditingController();
   TextEditingController nominalController = TextEditingController();
 
   var selectedDate = DateTime.now().obs;
@@ -52,7 +53,8 @@ class StatisticController extends GetxController {
   DateTime get endOfMonth {
     final nextMonth =
         DateTime(selectedDate.value.year, selectedDate.value.month + 1, 1);
-    return nextMonth.subtract(Duration(days: 1));
+    return nextMonth.subtract(
+        Duration(seconds: 1)); // Memastikan akhir bulan hingga 23:59:59
   }
 
   // Ambil bulan depan, sekarang, dan sebelumnya
@@ -82,6 +84,7 @@ class StatisticController extends GetxController {
                 : 0);
     selectedDate.value =
         DateTime(newYear, (newMonth % 12) == 0 ? 12 : newMonth % 12);
+
     fetchTotalIncome();
     fetchTotalExpense();
     fetchTotalBalance();
@@ -148,7 +151,6 @@ class StatisticController extends GetxController {
     }
   }
 
-  // Method untuk mengambil data pemasukan
   // Method untuk mengambil data pemasukan secara real-time
   void fetchIncome() {
     _firestore
@@ -400,8 +402,11 @@ class StatisticController extends GetxController {
   }
 
   Future<void> saveFormData(String nominal) async {
-    final controller = Get.find<StatisticController>();
+    final controller = Get.find<
+        StatisticController>(); // Assuming CashflowController is being used
     String collection;
+
+    // Determine the collection based on the selected tab
     switch (controller.selectedTab.value) {
       case 0:
         collection = 'pengeluaran';
@@ -409,36 +414,139 @@ class StatisticController extends GetxController {
       case 1:
         collection = 'pendapatan';
         break;
-      // case 2:
-      //   collection = 'transfer';
-      //   break;
       default:
         collection = 'pengeluaran';
     }
 
-    if (controller.selectedKategori.isNotEmpty &&
-        controller.selectedAkun.isNotEmpty &&
-        controller.selectedDates.isNotEmpty) {
-      try {
-        User? user = FirebaseAuth.instance.currentUser;
-
-        if (user != null) {
-          await FirebaseFirestore.instance.collection(collection).add({
-            'user_id': user.uid,
-            'nominal': nominal,
-            'deskripsi': controller.deskripsi.value,
-            'kategori': controller.selectedKategori.value,
-            'akun': controller.selectedAkun.value,
-            'tanggal': controller.selectedDates.value,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-          Get.snackbar('Success', 'Data berhasil disimpan ke $collection');
-        }
-      } catch (e) {
-        Get.snackbar('Error', 'Gagal menyimpan data ke $collection');
-      }
-    } else {
-      Get.snackbar('Error', 'Pastikan semua field diisi');
+    // Form validation to ensure all fields are filled
+    if (nominal.isEmpty || nominal == '0,00') {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Nominal tidak boleh kosong atau nol",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
     }
+
+    if (controller.deskripsi.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Deskripsi tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedKategori.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Kategori tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedAkun.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Akun tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    if (controller.selectedDates.value.isEmpty) {
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Tanggal tidak boleh kosong",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Menghapus ',' dari nominal sebelum disimpan
+        String sanitizedNominal = nominal.replaceAll(',', '');
+
+        await FirebaseFirestore.instance.collection(collection).add({
+          'user_id': user.uid,
+          'nominal':
+              sanitizedNominal, // Menggunakan sanitizedNominal tanpa koma
+          'deskripsi': controller.deskripsi.value,
+          'kategori': controller.selectedKategori.value,
+          'akun': controller.selectedAkun.value,
+          'tanggal': controller.selectedDates.value,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Show a success notification and close the modal dialog after saving
+        Get.defaultDialog(
+          title: "Berhasil",
+          middleText: "Data berhasil disimpan ke $collection",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            Get.back(); // Close the success dialog
+            Get.back(); // Close the form modal after successful save
+          },
+        );
+        // Reset form inputs
+        controller.nominalController.clear();
+        controller.deskripsiController.clear();
+        controller.selectedKategori.value = '';
+        controller.selectedAkun.value = '';
+        controller.selectedDates.value = '';
+      }
+    } catch (e) {
+      // Show an error notification
+      Get.defaultDialog(
+        title: "Error",
+        middleText: "Gagal menyimpan data ke $collection",
+        textConfirm: "OK",
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+    }
+  }
+
+  void clearForm(int selectedTab) {
+    if (selectedTab == 0) {
+      // Kosongkan controller untuk Pengeluaran
+      pengeluaranController.clear();
+    } else if (selectedTab == 1) {
+      // Kosongkan controller untuk Pendapatan
+      pendapatanController.clear();
+    }
+  }
+
+  void resetFormData() {
+    // Reset controller teks
+    deskripsiController.clear();
+
+    // Reset nominal (pastikan ini adalah controller nominal yang benar)
+    if (selectedTab.value == 0) {
+      pengeluaranController.clear();
+    } else {
+      pendapatanController.clear();
+    }
+
+    // Reset semua variabel yang diperlukan
+    selectedKategori.value = ''; // Reset kategori
+    selectedAkun.value = ''; // Reset akun
+    selectedDates.value = ''; // Reset tanggal
+    deskripsi.value = ''; // Reset deskripsi
   }
 }

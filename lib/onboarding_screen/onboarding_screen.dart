@@ -13,18 +13,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> onboardingData = [
     {
       "image": "assets/images/onboarding_image.png",
-      "title": "Welcome to your\nsaving journey",
-      "subtitle": "Together, we'll make saving easy\nand rewarding",
+      "title": "Selamat Datang di\nPerjalanan Hemat Anda",
+      "subtitle":
+          "Bersama-sama, Kami Akan Membuat Penghematan Menjadi Mudah\nDan Bermanfaat",
     },
     {
       "image": "assets/images/onboarding_image2.png",
-      "title": "Join us for\nsmart savings",
-      "subtitle": "Your financial journey starts here!",
+      "title": "Bergabunglah Dengan Kami\nTabungan Cerdas",
+      "subtitle": "Perjalanan Finansial Anda Dimulai Disini!",
     },
     {
       "image": "assets/images/onboarding_image1.png",
-      "title": "Stay on track\nwith ease",
-      "subtitle": "Track expenses and reach goals.",
+      "title": "Tetap Pada Jalur\nDengan Mudah",
+      "subtitle": "Lacak Pengeluaran Dan Capai Tujuan.",
     },
   ];
 
@@ -141,8 +142,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     }
                   },
                   child: Text(currentIndex == onboardingData.length - 1
-                      ? 'FINISH'
-                      : 'NEXT'),
+                      ? 'SELESAI'
+                      : 'LANJUT'),
                 ),
               ],
             ),
